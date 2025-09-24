@@ -9,21 +9,21 @@ const Contact = () => {
     {
       icon: Phone,
       title: "Telepon",
-      details: "+62 548 123 4567",
+      details: "0822 54187096",
       subtitle: "Senin - Jumat, 08:00 - 17:00",
       color: "gold"
     },
     {
       icon: Mail,
       title: "Email",
-      details: "info@lpkborneocitragemilang.com",
+      details: "lpk.borneocg@gmail.com",
       subtitle: "Respon dalam 24 jam",
       color: "corporate-blue"
     },
     {
       icon: MapPin,
       title: "Alamat",
-      details: "Jl. Mulawarman No. 123",
+      details: "Jl. Brigjend Katamso No. 41B",
       subtitle: "Bontang, Kalimantan Timur",
       color: "accent-red"
     },
@@ -166,7 +166,7 @@ const Contact = () => {
                 <MapPin className="text-gold mx-auto" size={48} />
                 <div>
                   <h3 className="text-xl font-semibold text-primary">Lokasi LPK Borneo Citra Gemilang</h3>
-                  <p className="text-muted-foreground">Jl. Mulawarman No. 123, Bontang, Kalimantan Timur</p>
+                  <p className="text-muted-foreground">Jl. Brigjend Katamso No. 41B, Bontang, Kalimantan Timur</p>
                 </div>
                 <Button variant="outline">
                   Buka di Google Maps

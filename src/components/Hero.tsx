@@ -39,7 +39,7 @@ const Hero = () => {
                 <div className="flex items-center justify-center w-12 h-12 bg-gold/20 rounded-full mx-auto mb-2">
                   <Users className="text-gold" size={24} />
                 </div>
-                <div className="text-2xl font-bold text-primary-foreground">2000+</div>
+                <div className="text-2xl font-bold text-primary-foreground">100+</div>
                 <div className="text-sm text-primary-foreground/70">Alumni Sukses</div>
               </div>
               <div className="text-center">
@@ -53,8 +53,8 @@ const Hero = () => {
                 <div className="flex items-center justify-center w-12 h-12 bg-gold/20 rounded-full mx-auto mb-2">
                   <Award className="text-gold" size={24} />
                 </div>
-                <div className="text-2xl font-bold text-primary-foreground">15+</div>
-                <div className="text-sm text-primary-foreground/70">Tahun Pengalaman</div>
+                <div className="text-2xl font-bold text-primary-foreground">2025</div>
+                <div className="text-sm text-primary-foreground/70">Berdiri Sejak</div>
               </div>
             </div>
           </div>

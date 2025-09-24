@@ -4,6 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Play, Users, Award, Building } from "lucide-react";
 
+// Gallery Images
+import administrasiClass from "@/assets/gallery/administrasi-class.jpg";
+import baristaTraining from "@/assets/gallery/barista-training.jpg";
+import designWorkshop from "@/assets/gallery/design-workshop.jpg";
+import graduationCeremony from "@/assets/gallery/graduation-ceremony.jpg";
+import computerLab from "@/assets/gallery/computer-lab.jpg";
+import partnershipSigning from "@/assets/gallery/partnership-signing.jpg";
+import digitalMarketingBootcamp from "@/assets/gallery/digital-marketing-bootcamp.jpg";
+import alumniTestimonial from "@/assets/gallery/alumni-testimonial.jpg";
+
 const Gallery = () => {
   const [activeTab, setActiveTab] = useState("all");
 
@@ -13,6 +23,7 @@ const Gallery = () => {
       title: "Kelas Administrasi Perkantoran",
       category: "training",
       type: "image",
+      image: administrasiClass,
       description: "Suasana pembelajaran di kelas administrasi perkantoran dengan fasilitas modern"
     },
     {
@@ -20,6 +31,7 @@ const Gallery = () => {
       title: "Pelatihan Barista Professional",
       category: "training",
       type: "image",
+      image: baristaTraining,
       description: "Peserta sedang mempraktikkan teknik latte art dalam program barista"
     },
     {
@@ -27,6 +39,7 @@ const Gallery = () => {
       title: "Workshop Desain Grafis",
       category: "training",
       type: "image",
+      image: designWorkshop,
       description: "Workshop intensif desain grafis menggunakan software Adobe Creative Suite"
     },
     {
@@ -34,6 +47,7 @@ const Gallery = () => {
       title: "Wisuda Angkatan 45",
       category: "graduation",
       type: "image",
+      image: graduationCeremony,
       description: "Momen kebahagiaan wisuda angkatan 45 LPK Borneo Citra Gemilang"
     },
     {
@@ -41,6 +55,7 @@ const Gallery = () => {
       title: "Testimoni Alumni",
       category: "testimonial",
       type: "video",
+      image: alumniTestimonial,
       description: "Cerita sukses alumni yang telah berkarir di berbagai perusahaan"
     },
     {
@@ -48,6 +63,7 @@ const Gallery = () => {
       title: "Fasilitas Laboratorium",
       category: "facility",
       type: "image",
+      image: computerLab,
       description: "Laboratorium komputer dengan perangkat terbaru untuk mendukung pembelajaran"
     },
     {
@@ -55,6 +71,7 @@ const Gallery = () => {
       title: "Kerjasama Industri",
       category: "partnership",
       type: "image",
+      image: partnershipSigning,
       description: "Penandatanganan MoU dengan perusahaan mitra untuk program magang"
     },
     {
@@ -62,6 +79,7 @@ const Gallery = () => {
       title: "Digital Marketing Bootcamp",
       category: "training",
       type: "image",
+      image: digitalMarketingBootcamp,
       description: "Intensive bootcamp digital marketing dengan praktik langsung"
     }
   ];
@@ -112,23 +130,18 @@ const Gallery = () => {
           {filteredItems.map((item) => (
             <Card key={item.id} className="group overflow-hidden hover:shadow-strong transition-all duration-300 hover:-translate-y-2 cursor-pointer">
               <div className="aspect-square bg-gradient-to-br from-gold/10 to-corporate-blue/10 relative overflow-hidden">
-                {/* Placeholder for actual images */}
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted/20 to-muted/40">
-                  <div className="text-center space-y-2">
-                    {item.type === "video" ? (
-                      <div className="w-16 h-16 bg-accent-red/20 rounded-full flex items-center justify-center mx-auto">
-                        <Play className="text-accent-red" size={24} />
-                      </div>
-                    ) : (
-                      <div className="w-16 h-16 bg-gold/20 rounded-full flex items-center justify-center mx-auto">
-                        <Building className="text-gold" size={24} />
-                      </div>
-                    )}
-                    <p className="text-xs text-muted-foreground px-2">
-                      {item.title}
-                    </p>
+                <img 
+                  src={item.image} 
+                  alt={item.title}
+                  className="w-full h-full object-cover"
+                />
+                {item.type === "video" && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-16 h-16 bg-accent-red/80 rounded-full flex items-center justify-center backdrop-blur-sm">
+                      <Play className="text-white ml-1" size={24} />
+                    </div>
                   </div>
-                </div>
+                )}
                 
                 {/* Overlay */}
                 <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/20 transition-all duration-300"></div>
