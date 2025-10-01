@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Award, Users, BookOpen } from "lucide-react";
+import heroTraining from "@/assets/hero-training.jpg";
 
 const Hero = () => {
   return (
@@ -61,13 +62,13 @@ const Hero = () => {
 
           {/* Hero Image/Visual */}
           <div className="relative">
-            <div className="relative z-10 bg-background/10 backdrop-blur-sm rounded-2xl p-8 border border-primary-foreground/20">
-              <div className="aspect-square bg-gradient-to-br from-gold/20 to-corporate-blue/20 rounded-xl flex items-center justify-center">
-                <div className="text-center space-y-4">
-                  <div className="text-6xl font-bold text-gold">BCG</div>
-                  <div className="text-primary-foreground font-semibold">Lembaga Pelatihan Kerja</div>
-                  <div className="text-primary-foreground/70">Bontang, Kalimantan Timur</div>
-                </div>
+            <div className="relative z-10 bg-background/10 backdrop-blur-sm rounded-2xl p-4 border border-primary-foreground/20">
+              <div className="aspect-square rounded-xl overflow-hidden">
+                <img 
+                  src={heroTraining} 
+                  alt="Professional Training at LPK Borneo Citra Gemilang" 
+                  className="w-full h-full object-cover"
+                />
               </div>
             </div>
             
