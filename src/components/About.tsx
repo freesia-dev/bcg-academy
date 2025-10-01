@@ -4,7 +4,7 @@ import { Award, Target, Users, Briefcase, CheckCircle, Star } from "lucide-react
 
 const About = () => {
   const achievements = [
-    { icon: Users, label: "Alumni Sukses", value: "2000+", color: "gold" },
+    { icon: Users, label: "Alumni Sukses", value: "100+", color: "gold" },
     { icon: Briefcase, label: "Mitra Industri", value: "50+", color: "corporate-blue" },
     { icon: Award, label: "Sertifikasi SKKNI", value: "6", color: "accent-red" },
     { icon: Star, label: "Rating Kepuasan", value: "4.9/5", color: "gold" }

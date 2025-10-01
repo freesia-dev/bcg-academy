@@ -52,15 +52,15 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <Phone size={16} className="text-gold" />
-                <span className="text-sm">+62 548 123 4567</span>
+                <span className="text-sm">+62 822 5418 7096</span>
               </div>
               <div className="flex items-center gap-3">
                 <Mail size={16} className="text-gold" />
-                <span className="text-sm">info@lpkborneocitragemilang.com</span>
+                <span className="text-sm">lpk.borneocg@gmail.com</span>
               </div>
               <div className="flex items-start gap-3">
                 <MapPin size={16} className="text-gold mt-0.5" />
-                <span className="text-sm">Jl. Mulawarman No. 123<br />Bontang, Kalimantan Timur</span>
+                <span className="text-sm">Jl. Brigjend Katamso No. 41B<br />Bontang, Kalimantan Timur</span>
               </div>
             </div>
           </div>
@@ -145,7 +145,7 @@ const Footer = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="md:flex items-center justify-between">
             <div className="text-sm text-primary-foreground/70 mb-4 md:mb-0">
-              © 2024 LPK Borneo Citra Gemilang. Semua hak dilindungi undang-undang.
+              © 2025 LPK Borneo Citra Gemilang. Semua hak dilindungi undang-undang.
             </div>
             
             <div className="flex flex-wrap gap-6 text-sm">
