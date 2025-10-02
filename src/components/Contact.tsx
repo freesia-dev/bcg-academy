@@ -169,20 +169,15 @@ const Contact = () => {
         {/* Map Section */}
         <div className="mt-16">
           <Card className="overflow-hidden">
-            <div className="aspect-video bg-gradient-to-br from-muted/20 to-muted/40 flex items-center justify-center">
-              <div className="text-center space-y-4">
-                <MapPin className="text-gold mx-auto" size={48} />
-                <div>
-                  <h3 className="text-xl font-semibold text-primary">Lokasi LPK Borneo Citra Gemilang</h3>
-                  <p className="text-muted-foreground">Jl. Brigjend Katamso No. 41B, Bontang, Kalimantan Timur</p>
-                </div>
-                <Button 
-                  variant="outline"
-                  onClick={() => window.open('https://maps.google.com/?q=Jl.+Brigjend+Katamso+No.+41B+Bontang', '_blank')}
-                >
-                  Buka di Google Maps
-                </Button>
-              </div>
+            <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+              <iframe 
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3989.8070829105063!2d117.46605467546635!3d0.13598616394783314!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x320a130010d879fd%3A0x65547125d8c222f5!2sBorneo%20Citra%20Gemilang!5e0!3m2!1sen!2sid!4v1759376856862!5m2!1sen!2sid" 
+                className="absolute top-0 left-0 w-full h-full border-0"
+                allowFullScreen
+                loading="lazy" 
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Lokasi LPK Borneo Citra Gemilang"
+              />
             </div>
           </Card>
         </div>
