@@ -59,7 +59,11 @@ const Header = () => {
 
           {/* CTA Button & Mobile Menu */}
           <div className="flex items-center gap-4">
-            <Button variant="gold" className="hidden md:inline-flex">
+            <Button 
+              variant="gold" 
+              className="hidden md:inline-flex"
+              onClick={() => window.location.href = '/registration'}
+            >
               Daftar Sekarang
             </Button>
             
@@ -91,7 +95,11 @@ const Header = () => {
                 {item.name}
               </a>
             ))}
-            <Button variant="gold" className="w-full mt-4">
+            <Button 
+              variant="gold" 
+              className="w-full mt-4"
+              onClick={() => window.location.href = '/registration'}
+            >
               Daftar Sekarang
             </Button>
           </nav>

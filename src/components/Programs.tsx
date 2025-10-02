@@ -1,9 +1,18 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Users, Award, ArrowRight } from "lucide-react";
+import ProgramRegistrationDialog from "./ProgramRegistrationDialog";
 
 const Programs = () => {
+  const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleProgramRegister = (programTitle: string) => {
+    setSelectedProgram(programTitle);
+    setIsDialogOpen(true);
+  };
   const programs = [
     {
       id: 1,
@@ -132,6 +141,7 @@ const Programs = () => {
                 <Button 
                   variant="gold" 
                   className="w-full group-hover:shadow-glow transition-all duration-300"
+                  onClick={() => handleProgramRegister(program.title)}
                 >
                   Daftar Program
                   <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
@@ -146,11 +156,23 @@ const Programs = () => {
           <p className="text-muted-foreground mb-6">
             Tidak menemukan program yang sesuai? Hubungi kami untuk konsultasi gratis!
           </p>
-          <Button variant="corporate" size="lg">
+          <Button 
+            variant="corporate" 
+            size="lg"
+            onClick={() => window.open('https://wa.me/6282254187096', '_blank')}
+          >
             Konsultasi Program
           </Button>
         </div>
       </div>
+
+      {selectedProgram && (
+        <ProgramRegistrationDialog
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          programTitle={selectedProgram}
+        />
+      )}
     </section>
   );
 };

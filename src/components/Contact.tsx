@@ -76,11 +76,19 @@ const Contact = () => {
               <CardContent className="p-0 space-y-4">
                 <h4 className="font-semibold text-primary">Hubungi Cepat</h4>
                 <div className="space-y-3">
-                  <Button variant="gold" className="w-full justify-start">
+                  <Button 
+                    variant="gold" 
+                    className="w-full justify-start"
+                    onClick={() => window.location.href = 'tel:082254187096'}
+                  >
                     <Phone size={16} className="mr-2" />
                     Telepon Sekarang
                   </Button>
-                  <Button variant="corporate" className="w-full justify-start">
+                  <Button 
+                    variant="corporate" 
+                    className="w-full justify-start"
+                    onClick={() => window.open('https://wa.me/6282254187096', '_blank')}
+                  >
                     <MessageCircle size={16} className="mr-2" />
                     Chat WhatsApp
                   </Button>
@@ -168,7 +176,10 @@ const Contact = () => {
                   <h3 className="text-xl font-semibold text-primary">Lokasi LPK Borneo Citra Gemilang</h3>
                   <p className="text-muted-foreground">Jl. Brigjend Katamso No. 41B, Bontang, Kalimantan Timur</p>
                 </div>
-                <Button variant="outline">
+                <Button 
+                  variant="outline"
+                  onClick={() => window.open('https://maps.google.com/?q=Jl.+Brigjend+Katamso+No.+41B+Bontang', '_blank')}
+                >
                   Buka di Google Maps
                 </Button>
               </div>

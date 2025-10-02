@@ -25,11 +25,23 @@ const Hero = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-wrap gap-4">
-              <Button variant="hero" size="lg">
+              <Button 
+                variant="hero" 
+                size="lg"
+                onClick={() => {
+                  const programsSection = document.getElementById('programs');
+                  programsSection?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
                 Lihat Program Pelatihan
                 <ArrowRight className="ml-2" size={20} />
               </Button>
-              <Button variant="outline" size="lg" className="bg-background/10 border-primary-foreground/20 text-primary-foreground hover:bg-background/20">
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="bg-background/10 border-primary-foreground/20 text-primary-foreground hover:bg-background/20"
+                onClick={() => window.open('https://wa.me/6282254187096', '_blank')}
+              >
                 Konsultasi Gratis
               </Button>
             </div>
