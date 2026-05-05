@@ -113,8 +113,6 @@ const Programs = () => {
               </CardHeader>
 
               <CardContent className="space-y-6 flex flex-col flex-1">
-
-              <CardContent className="space-y-6">
                 {/* Program Info */}
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="flex items-center gap-2">
