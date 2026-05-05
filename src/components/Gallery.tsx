@@ -60,11 +60,11 @@ const Gallery = () => {
     },
     {
       id: 6,
-      title: "Penyerahan Sertifikat SKKNI",
+      title: "Penyerahan Sertifikat BNSP",
       category: "graduation",
       type: "image",
       image: certificateHandover,
-      description: "Penyerahan sertifikat kompetensi SKKNI kepada peserta yang telah lulus pelatihan"
+      description: "Penyerahan sertifikat kompetensi BNSP kepada peserta yang telah lulus pelatihan"
     },
     {
       id: 7,
