@@ -18,8 +18,8 @@ const Programs = () => {
       id: 1,
       title: "Administrasi Perkantoran",
       description: "Pelajari keterampilan administrasi modern untuk menunjang karir di bidang perkantoran dan manajemen.",
-      duration: "3 Bulan",
-      capacity: "20 Peserta",
+      duration: "20 Hari",
+      capacity: "40 Peserta",
       level: "Pemula - Menengah",
       highlights: ["Microsoft Office", "Manajemen Dokumen", "Komunikasi Bisnis"],
       color: "corporate-blue"
@@ -28,8 +28,8 @@ const Programs = () => {
       id: 2,
       title: "Barista Professional",
       description: "Kuasai seni membuat kopi dan manajemen café untuk berkarir di industri F&B yang berkembang pesat.",
-      duration: "2 Bulan",
-      capacity: "15 Peserta",
+      duration: "20 Hari",
+      capacity: "30 Peserta",
       level: "Pemula",
       highlights: ["Coffee Making", "Latte Art", "Café Management"],
       color: "accent-red"
@@ -38,8 +38,8 @@ const Programs = () => {
       id: 3,
       title: "Rias Pengantin Gaun Panjang",
       description: "Pelajari teknik rias pengantin modern dan tradisional untuk membangun bisnis wedding organizer.",
-      duration: "4 Bulan",
-      capacity: "12 Peserta",
+      duration: "20 Hari",
+      capacity: "20 Peserta",
       level: "Pemula - Mahir",
       highlights: ["Makeup Artistry", "Hair Styling", "Wedding Planning"],
       color: "gold"
@@ -48,18 +48,18 @@ const Programs = () => {
       id: 4,
       title: "Desainer Grafis",
       description: "Kembangkan kreativitas dan technical skills untuk berkarir sebagai desainer grafis profesional.",
-      duration: "4 Bulan",
-      capacity: "18 Peserta",
+      duration: "20 Hari",
+      capacity: "30 Peserta",
       level: "Pemula - Menengah",
       highlights: ["Adobe Creative Suite", "Branding", "Digital Design"],
       color: "corporate-blue"
     },
     {
       id: 5,
-      title: "Operator Komputer",
+      title: "Operator Komputer Muda",
       description: "Kuasai keterampilan dasar komputer dan aplikasi perkantoran untuk meningkatkan daya saing kerja.",
-      duration: "2 Bulan",
-      capacity: "25 Peserta",
+      duration: "10 Hari",
+      capacity: "40 Peserta",
       level: "Pemula",
       highlights: ["Basic Computing", "Office Apps", "Data Entry"],
       color: "accent-red"
@@ -68,8 +68,8 @@ const Programs = () => {
       id: 6,
       title: "Digital Marketing",
       description: "Pelajari strategi pemasaran digital terkini untuk mengembangkan bisnis di era digital.",
-      duration: "3 Bulan",
-      capacity: "20 Peserta",
+      duration: "10 Hari",
+      capacity: "40 Peserta",
       level: "Pemula - Menengah",
       highlights: ["Social Media", "SEO/SEM", "Content Strategy"],
       color: "gold"
@@ -93,7 +93,7 @@ const Programs = () => {
         {/* Programs Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {programs.map((program) => (
-            <Card key={program.id} className="group hover:shadow-strong transition-all duration-300 hover:-translate-y-2 border-0 bg-card/80 backdrop-blur-sm">
+            <Card key={program.id} className="group hover:shadow-strong transition-all duration-300 hover:-translate-y-2 border-0 bg-card/80 backdrop-blur-sm flex flex-col h-full">
               <CardHeader className="space-y-4">
                 <div className="flex items-start justify-between">
                   <Badge 
@@ -104,15 +104,15 @@ const Programs = () => {
                   </Badge>
                   <div className={`w-3 h-3 rounded-full bg-${program.color}`}></div>
                 </div>
-                <CardTitle className="text-xl font-bold group-hover:text-gold transition-colors">
+                <CardTitle className="text-xl font-bold group-hover:text-gold transition-colors min-h-[3.5rem]">
                   {program.title}
                 </CardTitle>
-                <CardDescription className="text-muted-foreground leading-relaxed">
+                <CardDescription className="text-muted-foreground leading-relaxed min-h-[4.5rem]">
                   {program.description}
                 </CardDescription>
               </CardHeader>
 
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 flex flex-col flex-1">
                 {/* Program Info */}
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="flex items-center gap-2">
@@ -140,7 +140,7 @@ const Programs = () => {
                 {/* CTA */}
                 <Button 
                   variant="gold" 
-                  className="w-full group-hover:shadow-glow transition-all duration-300"
+                  className="w-full group-hover:shadow-glow transition-all duration-300 mt-auto"
                   onClick={() => handleProgramRegister(program.title)}
                 >
                   Daftar Program
