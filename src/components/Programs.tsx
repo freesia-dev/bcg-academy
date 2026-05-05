@@ -93,7 +93,7 @@ const Programs = () => {
         {/* Programs Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {programs.map((program) => (
-            <Card key={program.id} className="group hover:shadow-strong transition-all duration-300 hover:-translate-y-2 border-0 bg-card/80 backdrop-blur-sm">
+            <Card key={program.id} className="group hover:shadow-strong transition-all duration-300 hover:-translate-y-2 border-0 bg-card/80 backdrop-blur-sm flex flex-col h-full">
               <CardHeader className="space-y-4">
                 <div className="flex items-start justify-between">
                   <Badge 
@@ -104,13 +104,15 @@ const Programs = () => {
                   </Badge>
                   <div className={`w-3 h-3 rounded-full bg-${program.color}`}></div>
                 </div>
-                <CardTitle className="text-xl font-bold group-hover:text-gold transition-colors">
+                <CardTitle className="text-xl font-bold group-hover:text-gold transition-colors min-h-[3.5rem]">
                   {program.title}
                 </CardTitle>
-                <CardDescription className="text-muted-foreground leading-relaxed">
+                <CardDescription className="text-muted-foreground leading-relaxed min-h-[4.5rem]">
                   {program.description}
                 </CardDescription>
               </CardHeader>
+
+              <CardContent className="space-y-6 flex flex-col flex-1">
 
               <CardContent className="space-y-6">
                 {/* Program Info */}
@@ -140,7 +142,7 @@ const Programs = () => {
                 {/* CTA */}
                 <Button 
                   variant="gold" 
-                  className="w-full group-hover:shadow-glow transition-all duration-300"
+                  className="w-full group-hover:shadow-glow transition-all duration-300 mt-auto"
                   onClick={() => handleProgramRegister(program.title)}
                 >
                   Daftar Program
