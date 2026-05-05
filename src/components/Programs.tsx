@@ -86,7 +86,7 @@ const Programs = () => {
           </h2>
           <p className="text-lg text-muted-foreground">
             Pilih program pelatihan yang sesuai dengan minat dan tujuan karir Anda. 
-            Semua program dilengkapi dengan sertifikat SKKNI dan pendampingan penempatan kerja.
+            Semua program dilengkapi dengan sertifikat BNSP dan pendampingan penempatan kerja.
           </p>
         </div>
 
@@ -126,7 +126,7 @@ const Programs = () => {
                 </div>
 
                 {/* Highlights */}
-                <div className="space-y-2">
+                <div className="space-y-2 min-h-[6rem]">
                   <h4 className="font-semibold text-sm text-primary">Yang Akan Dipelajari:</h4>
                   <div className="flex flex-wrap gap-2">
                     {program.highlights.map((highlight, index) => (
