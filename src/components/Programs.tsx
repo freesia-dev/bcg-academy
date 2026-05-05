@@ -86,7 +86,7 @@ const Programs = () => {
           </h2>
           <p className="text-lg text-muted-foreground">
             Pilih program pelatihan yang sesuai dengan minat dan tujuan karir Anda. 
-            Semua program dilengkapi dengan sertifikat SKKNI dan pendampingan penempatan kerja.
+            Semua program dilengkapi dengan sertifikat BNSP dan pendampingan penempatan kerja.
           </p>
         </div>
 
