@@ -126,7 +126,7 @@ const Programs = () => {
                 </div>
 
                 {/* Highlights */}
-                <div className="space-y-2">
+                <div className="space-y-2 min-h-[6rem]">
                   <h4 className="font-semibold text-sm text-primary">Yang Akan Dipelajari:</h4>
                   <div className="flex flex-wrap gap-2">
                     {program.highlights.map((highlight, index) => (
