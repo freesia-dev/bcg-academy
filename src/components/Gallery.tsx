@@ -8,8 +8,8 @@ import { Play, Users, Award, Building } from "lucide-react";
 import administrasiClass from "@/assets/gallery/administrasi-class.jpg";
 import baristaTraining from "@/assets/gallery/barista-training.jpg";
 import designWorkshop from "@/assets/gallery/design-workshop.jpg";
-import graduationCeremony from "@/assets/gallery/graduation-ceremony.jpg";
-import computerLab from "@/assets/gallery/computer-lab.jpg";
+import bridalMakeupTraining from "@/assets/gallery/bridal-makeup-training.jpg";
+import certificateHandover from "@/assets/gallery/certificate-handover.jpg";
 import partnershipSigning from "@/assets/gallery/partnership-signing.jpg";
 import digitalMarketingBootcamp from "@/assets/gallery/digital-marketing-bootcamp.jpg";
 import alumniTestimonial from "@/assets/gallery/alumni-testimonial.jpg";
@@ -44,11 +44,11 @@ const Gallery = () => {
     },
     {
       id: 4,
-      title: "Wisuda Angkatan 45",
-      category: "graduation",
+      title: "Pelatihan Rias Pengantin",
+      category: "training",
       type: "image",
-      image: graduationCeremony,
-      description: "Momen kebahagiaan wisuda angkatan 45 LPK Borneo Citra Gemilang"
+      image: bridalMakeupTraining,
+      description: "Praktik langsung teknik rias pengantin dengan instruktur berpengalaman"
     },
     {
       id: 5,
@@ -60,11 +60,11 @@ const Gallery = () => {
     },
     {
       id: 6,
-      title: "Fasilitas Laboratorium",
-      category: "facility",
+      title: "Penyerahan Sertifikat SKKNI",
+      category: "graduation",
       type: "image",
-      image: computerLab,
-      description: "Laboratorium komputer dengan perangkat terbaru untuk mendukung pembelajaran"
+      image: certificateHandover,
+      description: "Penyerahan sertifikat kompetensi SKKNI kepada peserta yang telah lulus pelatihan"
     },
     {
       id: 7,
@@ -87,8 +87,8 @@ const Gallery = () => {
   const tabs = [
     { id: "all", label: "Semua", icon: null },
     { id: "training", label: "Pelatihan", icon: Users },
-    { id: "graduation", label: "Wisuda", icon: Award },
-    { id: "facility", label: "Fasilitas", icon: Building },
+    { id: "graduation", label: "Sertifikasi", icon: Award },
+    { id: "partnership", label: "Kerjasama", icon: Building },
     { id: "testimonial", label: "Testimoni", icon: Play }
   ];
 
