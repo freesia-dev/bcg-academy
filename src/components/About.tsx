@@ -6,12 +6,12 @@ const About = () => {
   const achievements = [
     { icon: Users, label: "Alumni Sukses", value: "100+", color: "gold" },
     { icon: Briefcase, label: "Mitra Industri", value: "50+", color: "corporate-blue" },
-    { icon: Award, label: "Sertifikasi SKKNI", value: "6", color: "accent-red" },
+    { icon: Award, label: "Sertifikasi BNSP", value: "6", color: "accent-red" },
     { icon: Star, label: "Rating Kepuasan", value: "4.9/5", color: "gold" }
   ];
 
   const features = [
-    "Kurikulum berbasis SKKNI (Standar Kompetensi Kerja Nasional Indonesia)",
+    "Kurikulum berbasis BNSP (Badan Nasional Sertifikasi Profesi)",
     "Tenaga pengajar profesional dengan pengalaman industri",
     "Fasilitas pelatihan modern dan lengkap",
     "Program magang dan penempatan kerja",
