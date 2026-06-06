@@ -53,8 +53,11 @@ const Admin = () => {
       if (!session) { navigate("/auth"); return; }
       setUserEmail(session.user.email || "");
       const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", session.user.id);
-      const admin = (roles || []).some((r: any) => r.role === "admin");
+      const roleList = (roles || []).map((r: any) => r.role);
+      const superadmin = roleList.includes("superadmin");
+      const admin = superadmin || roleList.includes("admin");
       setIsAdmin(admin);
+      setIsSuperadmin(superadmin);
       setChecking(false);
       if (admin) loadGallery();
     };
