@@ -13,13 +13,16 @@ const Hero = () => {
           {/* Hero Content */}
           <div className="space-y-8">
             <div className="space-y-4">
+              <p className="inline-block px-4 py-1.5 rounded-full bg-gold/15 text-gold text-sm font-semibold tracking-wide">
+                Membangun Keterampilan, Mewujudkan Masa Depan Gemilang
+              </p>
               <h1 className="text-4xl md:text-6xl font-bold text-primary-foreground leading-tight">
                 Wujudkan{" "}
                 <span className="text-gradient">Karier Impian</span>{" "}
                 Anda Bersama Kami
               </h1>
               <p className="text-xl text-primary-foreground/80 max-w-2xl">
-                LPK Borneo Citra Gemilang adalah lembaga pelatihan kerja terpercaya yang mencetak SDM unggul dan berkompeten di Kota Bontang. Bergabunglah dengan ribuan alumni sukses kami!
+                LPK Borneo Citra Gemilang (BCG Academy) adalah lembaga pelatihan kerja terpercaya di Kota Bontang. Kami mencetak SDM kompeten dan profesional melalui pelatihan berbasis SKKNI dengan Sertifikasi resmi BNSP.
               </p>
             </div>
 
