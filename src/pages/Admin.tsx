@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LogOut, Loader2, Plus, Trash2, Pencil, X, ArrowLeft } from "lucide-react";
 import { usePrograms, type Program } from "@/hooks/usePrograms";
 import PaymentsAdmin from "@/components/admin/PaymentsAdmin";
+import CertificatesAdmin from "@/components/admin/CertificatesAdmin";
 
 interface GalleryItem { id: string; title: string; description: string | null; category: string; image_url: string; sort_order: number; }
 
@@ -156,6 +157,7 @@ const Admin = () => {
             <TabsTrigger value="programs">Program Pelatihan</TabsTrigger>
             <TabsTrigger value="gallery">Galeri</TabsTrigger>
             <TabsTrigger value="payments">Pembayaran</TabsTrigger>
+            <TabsTrigger value="certificates">Sertifikat</TabsTrigger>
           </TabsList>
 
           <TabsContent value="programs" className="space-y-4 mt-6">
@@ -252,6 +254,11 @@ const Admin = () => {
           <TabsContent value="payments" className="mt-6">
             <h2 className="text-2xl font-bold mb-4">Verifikasi Pembayaran</h2>
             <PaymentsAdmin />
+          </TabsContent>
+
+          <TabsContent value="certificates" className="mt-6">
+            <h2 className="text-2xl font-bold mb-4">Template Sertifikat</h2>
+            <CertificatesAdmin />
           </TabsContent>
         </Tabs>
       </main>
