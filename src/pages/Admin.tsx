@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut, Loader2, Plus, Trash2, Pencil, X, ArrowLeft } from "lucide-react";
 import { usePrograms, type Program } from "@/hooks/usePrograms";
+import PaymentsAdmin from "@/components/admin/PaymentsAdmin";
 
 interface GalleryItem { id: string; title: string; description: string | null; category: string; image_url: string; sort_order: number; }
 
@@ -151,7 +152,11 @@ const Admin = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="programs">
-          <TabsList><TabsTrigger value="programs">Program Pelatihan</TabsTrigger><TabsTrigger value="gallery">Galeri</TabsTrigger></TabsList>
+          <TabsList>
+            <TabsTrigger value="programs">Program Pelatihan</TabsTrigger>
+            <TabsTrigger value="gallery">Galeri</TabsTrigger>
+            <TabsTrigger value="payments">Pembayaran</TabsTrigger>
+          </TabsList>
 
           <TabsContent value="programs" className="space-y-4 mt-6">
             <div className="flex justify-between items-center">
@@ -242,6 +247,11 @@ const Admin = () => {
                 </Card>
               ))}
             </div>
+          </TabsContent>
+
+          <TabsContent value="payments" className="mt-6">
+            <h2 className="text-2xl font-bold mb-4">Verifikasi Pembayaran</h2>
+            <PaymentsAdmin />
           </TabsContent>
         </Tabs>
       </main>

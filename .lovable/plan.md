@@ -1,119 +1,106 @@
 
-# Rencana: Sinkronisasi Profil + Transformasi ke LMS
+# Rencana: Auth Peserta + Katalog Kursus + Enrollment
 
-## Bagian 1 — Sinkronisasi Konten Company Profile
+Membangun jalur lengkap dari **registrasi peserta → pilih kursus → daftar/bayar → masuk ke "Kursus Saya"**. Portal belajar (player video, kuis, sertifikat) menyusul di langkah berikutnya.
 
-Mengganti/menyelaraskan teks di komponen berikut sesuai PDF (tagline resmi, sambutan direktur, visi-misi, "Our Offer", deskripsi layanan, kontak).
+## 1. Auth Peserta
 
-- **Hero / Header**: tambah tagline resmi *"Membangun Keterampilan, Mewujudkan Masa Depan Gemilang"*.
-- **About (`src/components/About.tsx` + `AboutPage.tsx`)**: ganti narasi dengan ringkasan resmi PDF + Welcome Message dari Direktur (Euis Paramitha) + Visi & Misi.
-- **Programs**: pastikan 6 program selaras dengan layanan resmi (Administrasi Perkantoran, Barista, Desain Grafis, Operator Komputer, Tata Kecantikan/Rias, Menjahit/Digital Marketing — disesuaikan data Anda yang ada).
-- **"Our Offer"**: section baru di homepage (3 kartu: Pelatihan Berbasis Kompetensi · Sertifikasi BNSP · Dukungan Karier & Wirausaha).
-- **Contact**: konfirmasi alamat resmi *Jl. Dewi Sartika Gg. Kulintang 4 No. 21, Kel. Bontang Baru, Kec. Bontang Utara, 75311*, telp/WA `+62 822 5418 7096`, email `lpk.borneocg@gmail.com`.
-- **Legalitas / Footer**: tambah info NIB `3001250056199` dan tahun pendirian (Akta Notaris 6 Januari 2025).
+`src/pages/Auth.tsx` sekarang dipakai admin & peserta bersama — saya pisahkan perannya, bukan filenya:
 
-## Bagian 2 — Arsitektur LMS
+- Tetap satu halaman `/auth` (Login + Daftar dalam tab).
+- Form **Daftar** tambah field: Nama lengkap, Nomor WhatsApp (disimpan ke `profiles` via trigger `handle_new_user` yang sudah ada — diteruskan via `options.data`).
+- Setelah login:
+  - Jika user punya role `admin` → redirect `/admin` (perilaku lama).
+  - Selain itu → redirect `/kursus-saya`.
+- Tambah halaman `/reset-password` untuk recovery (wajib).
+- Aktifkan Google OAuth + email/password (sudah didefault Lovable Cloud).
+- Aktifkan auto-confirm email agar peserta bisa langsung login tanpa verifikasi (dapat dimatikan nanti).
 
-Tiga jenis kursus dalam satu sistem:
+## 2. Katalog Kursus Publik
 
-| Jenis | Akses | Pembayaran |
-|---|---|---|
-| **Online berbayar** | Setelah bayar, peserta dapat akses modul/video/kuis di portal | Midtrans (nanti) — sementara "Transfer + konfirmasi admin" |
-| **Offline berbayar** | Daftar via form → admin verifikasi pembayaran → dijadwalkan | Idem |
-| **Offline gratis** | Daftar via form, langsung dijadwalkan | — |
+Route baru `/kursus` (sekaligus alias dari menu yang ada):
 
-### Struktur data (tabel baru)
+- Grid kursus dari tabel `courses` (yang `is_published=true`).
+- Filter: **Tipe** (Online / Offline), **Harga** (Gratis / Berbayar), **Kategori**.
+- Setiap kartu: cover, judul, badge tipe + harga (Rp/Gratis), durasi, level, tombol "Detail".
+- Update Header dropdown "Program Pelatihan" → arahkan ke `/kursus`.
 
-```text
-courses
- ├─ id, slug, title, description, cover_image
- ├─ type: 'online' | 'offline'
- ├─ price (nullable, 0 = gratis), is_free, currency
- ├─ duration, capacity, level, category
- ├─ is_published, sort_order
- └─ instructor_name, certificate_template
+## 3. Detail Kursus
 
-modules                      (urut per course)
- └─ id, course_id, title, sort_order
+Route `/kursus/:slug`:
 
-lessons                      (urut per module)
- ├─ id, module_id, title, sort_order
- ├─ content_type: 'video'|'text'|'file'|'embed'
- └─ video_url / content_md / file_url
+- Hero: cover, judul, instruktur, harga, badge tipe.
+- Silabus: daftar modul + pelajaran (judul saja; lock icon kalau belum enrolled).
+- Pelajaran dengan `is_preview=true` boleh diintip tanpa daftar.
+- Tombol aksi dinamis:
+  - Belum login → "Masuk untuk Daftar".
+  - Sudah login, belum enrolled, kursus **gratis** → "Daftar Sekarang" (langsung `status='active'`).
+  - Sudah login, belum enrolled, kursus **berbayar** → "Beli Kursus" → buka **CheckoutDialog**.
+  - Sudah enrolled `pending_payment` → badge "Menunggu Verifikasi Admin".
+  - Sudah enrolled `active`/`completed` → tombol "Mulai Belajar" (route `/learn/:slug` — placeholder dulu, dibangun langkah berikutnya).
 
-quizzes                      (1 per modul / opsional)
- ├─ id, module_id, title, passing_score
- └─ questions (jsonb: pertanyaan, pilihan, jawaban benar)
+## 4. Checkout (Transfer Manual)
 
-enrollments                  (peserta ↔ kursus)
- ├─ id, user_id, course_id
- ├─ status: 'pending_payment'|'active'|'completed'|'cancelled'
- ├─ payment_method, payment_proof_url, paid_at
- └─ enrolled_at, completed_at, certificate_url
+`CheckoutDialog`:
 
-lesson_progress
- └─ user_id, lesson_id, completed_at
+- Tampilkan ringkasan: nama kursus + total harga.
+- Info rekening transfer (diambil dari `site_content.payment_info` — saya seed default + bisa diedit admin nanti).
+- Field: nominal transfer, metode (Transfer Bank/QRIS), upload bukti.
+- Bukti diupload ke **bucket Storage baru `payment-proofs`** (private, RLS: peserta upload milik sendiri, admin baca semua).
+- Submit → buat row `enrollments` (`status='pending_payment'`, `payment_proof_url`, `paid_at`).
+- Edge function `notify-payment` kirim email ke `lpk.borneocg@gmail.com` (pakai Resend yang sudah ada).
+- Toast: "Pembayaran terkirim. Admin akan verifikasi maks 1×24 jam".
 
-quiz_attempts
- └─ user_id, quiz_id, score, passed, answers (jsonb), submitted_at
+## 5. Halaman "Kursus Saya"
 
-site_content                 (CMS homepage)
- └─ key (unique), value (jsonb)     -- hero, about, offer, contact
-```
+Route `/kursus-saya` (proteksi: login wajib):
 
-Profil peserta disimpan di `profiles` (auto-create via trigger saat signup).
+- Tab **Aktif** | **Menunggu Verifikasi** | **Selesai**.
+- Kartu per enrollment: judul, status, progress bar (placeholder), tombol "Mulai Belajar" atau "Lihat Bukti".
 
-### Alur peserta (user flow)
+## 6. Header & Navigasi
 
-1. Browsing katalog kursus (filter: online/offline, gratis/berbayar, kategori).
-2. Klik kursus → halaman detail (silabus, instruktur, harga, tombol *Daftar* / *Beli*).
-3. **Online berbayar**: login → "Beli" → upload bukti transfer → status `pending_payment` → admin verifikasi → `active` → tombol "Mulai Belajar".
-4. **Offline**: isi form pendaftaran (sama seperti sekarang, email ke admin via edge function), admin verifikasi di panel.
-5. **Portal belajar** (`/learn/:slug`): sidebar modul/pelajaran, player video / konten teks, tandai selesai, kuis di akhir modul, sertifikat auto-generate saat semua modul + kuis lulus.
+- Item menu baru "Kursus" → `/kursus` (menggantikan "Program Pelatihan" yang lama, tapi link offline-only tetap ada di footer).
+- Jika user login: avatar dropdown (Kursus Saya · Logout). Jika admin: tambah "Dashboard Admin".
 
-### Akses & keamanan (RLS)
+## 7. Storage Bucket
 
-- `courses`, `modules`, `lessons` (judul): publik (`is_published=true`).
-- **Konten penuh lesson & quiz**: hanya `authenticated` dengan `enrollment.status='active'` (dicek via security-definer function `has_active_enrollment(user_id, course_id)`).
-- `enrollments`, `lesson_progress`, `quiz_attempts`: peserta hanya lihat miliknya; admin lihat semua via `has_role(uid,'admin')`.
-- `site_content`: read publik, write admin.
+- Buat bucket **private** `payment-proofs` via `storage_create_bucket`.
+- RLS pada `storage.objects`:
+  - INSERT: authenticated, path harus diawali `{auth.uid()}/`.
+  - SELECT: pemilik file atau admin.
+  - DELETE: admin.
 
-## Bagian 3 — Panel Admin (perluasan `src/pages/Admin.tsx`)
+## 8. Konfigurasi Auth
 
-Tab baru di samping Program & Galeri:
+- `configure_auth`: `auto_confirm_email=true`, `password_hibp_enabled=true`, `disable_signup=false`.
+- Konfigurasi Google provider.
 
-1. **Homepage CMS** — form edit konten hero, about, offer cards, contact (CRUD ke `site_content`).
-2. **Kursus & Materi** — list kursus → builder modul + lesson (drag-sort), editor video URL/markdown/file upload, builder kuis (tambah pertanyaan + pilihan + jawaban benar).
-3. **Peserta & Progress** — tabel enrollment per kursus, lihat % progress, hasil kuis, tombol terbitkan sertifikat manual.
-4. **Pembayaran** — tab "Pending Payment": tampil bukti transfer, tombol *Verifikasi* (set status `active`) / *Tolak*. Tab "Laporan": total pendapatan, jumlah peserta per kursus, export CSV.
+## File yang Dibuat/Diubah
 
-Komponen sekarang (Programs lama) tetap dipertahankan sebagai "Program Offline Unggulan" — atau dimigrasi ke `courses` dengan `type='offline'`. Saya rekomendasikan **migrasi**: data Programs jadi seed `courses` offline supaya satu sistem.
+**Baru:**
+- `src/pages/CoursesPage.tsx`
+- `src/pages/CourseDetail.tsx`
+- `src/pages/MyCourses.tsx`
+- `src/pages/ResetPassword.tsx`
+- `src/pages/Learn.tsx` *(placeholder)*
+- `src/components/CheckoutDialog.tsx`
+- `src/components/auth/ProtectedRoute.tsx`
+- `src/hooks/useAuth.ts` *(session + role + profile)*
+- `src/hooks/useCourses.ts`, `src/hooks/useEnrollments.ts`
+- `supabase/functions/notify-payment/index.ts`
 
-## Bagian 4 — Payment (Midtrans, persiapan nanti)
+**Diubah:**
+- `src/App.tsx` — route baru
+- `src/components/Header.tsx` — link "Kursus" + avatar dropdown
+- `src/pages/Auth.tsx` — field nama/WA + redirect berbasis role
+- `supabase/config.toml` — daftarkan `notify-payment`
 
-Yang perlu Anda siapkan saat siap mengaktifkan Midtrans:
-1. Akun Midtrans (sandbox dulu) di https://dashboard.midtrans.com.
-2. **Server Key** & **Client Key** dari menu *Settings → Access Keys*.
-3. **Merchant ID**.
-4. URL callback notifikasi (akan saya beri setelah edge function siap).
-5. Aktivasi metode bayar yang diinginkan (QRIS, GoPay, VA BCA/Mandiri/BNI, kartu).
+## Catatan
 
-Sementara itu sistem pakai **transfer manual + verifikasi admin** sehingga tetap bisa jualan dari hari pertama.
+- Belum ada portal belajar (player video, mark complete, kuis) — itu langkah berikutnya.
+- Belum ada sertifikat — langkah berikutnya.
+- Pembayaran masih manual; Midtrans menyusul saat Anda siapkan kredensial.
+- Panel admin perlu tab baru "Verifikasi Pembayaran" — saya tambahkan di langkah ini agar alur end-to-end bisa Anda uji (tanpanya enrollment akan menggantung).
 
-## Urutan Eksekusi (jika disetujui)
-
-1. **Migrasi DB** — buat tabel `profiles`, `courses`, `modules`, `lessons`, `quizzes`, `enrollments`, `lesson_progress`, `quiz_attempts`, `site_content` + RLS + security-definer + grants. Seed `courses` dari data `programs` yang ada.
-2. **Sinkronisasi konten profil** (Bagian 1) — non-LMS, cepat.
-3. **Auth peserta** — halaman signup/login peserta (terpisah dari `/auth` admin, atau dipakai bersama dengan role-routing).
-4. **Katalog & detail kursus** publik (`/kursus`, `/kursus/:slug`).
-5. **Checkout & upload bukti transfer** + edge function notifikasi admin.
-6. **Portal belajar** (`/learn/:slug`) + tracking progress + kuis.
-7. **Sertifikat auto-generate** (PDF via edge function).
-8. **Admin panel — Homepage CMS, Course Builder, Pembayaran, Laporan**.
-9. (Nanti) Integrasi Midtrans setelah Anda berikan kredensial.
-
-## Catatan / Risiko
-
-- Scope LMS sangat besar; saya sarankan dikerjakan **bertahap** per nomor di atas, masing-masing bisa direview sebelum lanjut. Mau saya kerjakan **Langkah 1 + 2** lebih dulu (fondasi DB + sinkron konten profil), atau langsung "all-in" sampai portal belajar berfungsi?
-- Hak admin awal tetap menggunakan sistem `user_roles` yang sudah ada.
-- Sertifikat awal: template HTML→PDF sederhana berisi nama, kursus, tanggal, tanda tangan Direktur. Bisa diperindah nanti.
+Lanjutkan?

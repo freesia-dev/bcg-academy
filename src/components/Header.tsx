@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Phone, Mail, ChevronDown } from "lucide-react";
+import { Menu, X, Phone, Mail, ChevronDown, User as UserIcon, LogOut, BookOpen, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import logoImage from "@/assets/logo-bcg.png";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ProgramLink { id: string; title: string; slug: string; }
 
@@ -12,12 +17,14 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [programs, setPrograms] = useState<ProgramLink[]>([]);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, isAdmin } = useAuth();
 
   useEffect(() => {
     supabase
-      .from("programs")
+      .from("courses")
       .select("id,title,slug")
-      .eq("is_active", true)
+      .eq("is_published", true)
       .order("sort_order")
       .then(({ data }) => setPrograms(data || []));
   }, []);
@@ -26,11 +33,13 @@ const Header = () => {
 
   const navigationItems = [
     { name: "Beranda", to: "/" },
-    { name: "Program Pelatihan", to: "/program-pelatihan", hasDropdown: true },
+    { name: "Kursus", to: "/kursus", hasDropdown: true },
     { name: "Tentang Kami", to: "/tentang-kami" },
     { name: "Galeri", to: "/#gallery" },
     { name: "Kontak", to: "/kontak" },
   ];
+
+  const handleLogout = async () => { await supabase.auth.signOut(); navigate("/"); };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-md">
@@ -68,15 +77,15 @@ const Header = () => {
                       {programs.map((p) => (
                         <Link
                           key={p.id}
-                          to={`/program-pelatihan/${p.slug}`}
+                          to={`/kursus/${p.slug}`}
                           className="block px-4 py-2 text-sm text-foreground hover:bg-secondary hover:text-gold transition-colors"
                         >
                           {p.title}
                         </Link>
                       ))}
                       <div className="border-t border-border my-1" />
-                      <Link to="/program-pelatihan" className="block px-4 py-2 text-sm font-medium text-gold hover:bg-secondary">
-                        Lihat Semua Program →
+                      <Link to="/kursus" className="block px-4 py-2 text-sm font-medium text-gold hover:bg-secondary">
+                        Lihat Semua Kursus →
                       </Link>
                     </div>
                   </div>
@@ -85,10 +94,29 @@ const Header = () => {
             ))}
           </nav>
 
-          <div className="flex items-center gap-4">
-            <Button variant="gold" className="hidden md:inline-flex" onClick={() => window.location.href = '/registration'}>
-              Daftar Sekarang
-            </Button>
+          <div className="flex items-center gap-2">
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <UserIcon size={16} />
+                    <span className="hidden md:inline max-w-[120px] truncate">{user.email}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-background">
+                  <DropdownMenuLabel className="truncate">{user.email}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate("/kursus-saya")}><BookOpen className="mr-2 h-4 w-4" />Kursus Saya</DropdownMenuItem>
+                  {isAdmin && <DropdownMenuItem onClick={() => navigate("/admin")}><LayoutDashboard className="mr-2 h-4 w-4" />Dashboard Admin</DropdownMenuItem>}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}><LogOut className="mr-2 h-4 w-4" />Keluar</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button variant="gold" className="hidden md:inline-flex" onClick={() => navigate('/auth')}>
+                Masuk / Daftar
+              </Button>
+            )}
             <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </Button>
@@ -105,7 +133,7 @@ const Header = () => {
                 {item.hasDropdown && (
                   <div className="pl-4 space-y-1">
                     {programs.map((p) => (
-                      <Link key={p.id} to={`/program-pelatihan/${p.slug}`} className="block text-sm text-muted-foreground hover:text-gold py-1">
+                      <Link key={p.id} to={`/kursus/${p.slug}`} className="block text-sm text-muted-foreground hover:text-gold py-1">
                         • {p.title}
                       </Link>
                     ))}
@@ -113,9 +141,17 @@ const Header = () => {
                 )}
               </div>
             ))}
-            <Button variant="gold" className="w-full mt-4" onClick={() => window.location.href = '/registration'}>
-              Daftar Sekarang
-            </Button>
+            {user ? (
+              <>
+                <Link to="/kursus-saya" className="block text-foreground hover:text-gold font-medium py-2">Kursus Saya</Link>
+                {isAdmin && <Link to="/admin" className="block text-foreground hover:text-gold font-medium py-2">Dashboard Admin</Link>}
+                <Button variant="outline" className="w-full mt-4" onClick={handleLogout}>Keluar</Button>
+              </>
+            ) : (
+              <Button variant="gold" className="w-full mt-4" onClick={() => navigate('/auth')}>
+                Masuk / Daftar
+              </Button>
+            )}
           </nav>
         </div>
       </div>
