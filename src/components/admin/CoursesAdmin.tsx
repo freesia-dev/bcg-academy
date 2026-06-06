@@ -574,4 +574,81 @@ const QuizDialog = ({ quiz, onClose, onSaved }: { quiz: Quiz; onClose: () => voi
   );
 };
 
+// ============ CSV IMPORT DIALOG ============
+const STRUCT_TEMPLATE = `course_slug,course_title,module_title,module_sort,lesson_title,lesson_type,lesson_content,lesson_sort,lesson_duration
+barista-101,Barista Dasar,Pengenalan Kopi,0,Sejarah Kopi,video,https://youtu.be/xxxx,0,8
+barista-101,Barista Dasar,Pengenalan Kopi,0,Catatan Sejarah,text,"Kopi berasal dari ...",1,
+barista-101,Barista Dasar,Teknik Espresso,1,Latihan Tamping,video,https://youtu.be/yyyy,0,12`;
+
+const QUIZ_TEMPLATE = `course_slug,module_title,quiz_title,passing_score,question,option1,option2,option3,option4,correct_index
+barista-101,Pengenalan Kopi,Kuis Sejarah,70,Asal kopi dari?,Etiopia,Brasil,Vietnam,Indonesia,0
+barista-101,Pengenalan Kopi,Kuis Sejarah,70,Tahun penemuan?,1500,1600,1700,1800,1`;
+
+const CSVImportDialog = ({ open, onClose, onDone }: { open: boolean; onClose: () => void; onDone: () => void }) => {
+  const { toast } = useToast();
+  const [tab, setTab] = useState("struct");
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<ImportResult | null>(null);
+
+  const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    const r = new FileReader(); r.onload = () => setText(String(r.result || "")); r.readAsText(f);
+  };
+
+  const run = async () => {
+    if (!text.trim()) return toast({ title: "CSV kosong", variant: "destructive" });
+    setBusy(true);
+    const res = tab === "quiz" ? await importQuizzesCSV(text) : await importStructureCSV(text);
+    setBusy(false);
+    setResult(res);
+    toast({ title: "Import selesai", description: `${res.courses} kursus, ${res.modules} modul, ${res.lessons} pelajaran, ${res.quizzes} kuis` });
+    onDone();
+  };
+
+  const useTemplate = () => setText(tab === "quiz" ? QUIZ_TEMPLATE : STRUCT_TEMPLATE);
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Import CSV</DialogTitle></DialogHeader>
+        <Tabs value={tab} onValueChange={(v) => { setTab(v); setResult(null); }}>
+          <TabsList>
+            <TabsTrigger value="struct">Kursus / Modul / Pelajaran</TabsTrigger>
+            <TabsTrigger value="quiz">Kuis</TabsTrigger>
+          </TabsList>
+          <TabsContent value="struct" className="space-y-2">
+            <p className="text-sm text-muted-foreground">Kolom: <code className="text-xs">course_slug, course_title, module_title, module_sort, lesson_title, lesson_type (video|text|file|embed), lesson_content, lesson_sort, lesson_duration</code></p>
+          </TabsContent>
+          <TabsContent value="quiz" className="space-y-2">
+            <p className="text-sm text-muted-foreground">Kolom: <code className="text-xs">course_slug, module_title, quiz_title, passing_score, question, option1..option6, correct_index</code> (0-based). Baris dengan kuis sama akan digabung.</p>
+          </TabsContent>
+        </Tabs>
+        <div className="flex gap-2 items-center">
+          <Button asChild variant="outline" size="sm">
+            <label className="cursor-pointer"><Upload className="h-4 w-4 mr-1" />Upload .csv<input type="file" accept=".csv" hidden onChange={onFile} /></label>
+          </Button>
+          <Button variant="outline" size="sm" onClick={useTemplate}>Pakai template</Button>
+        </div>
+        <Textarea rows={10} value={text} onChange={(e) => setText(e.target.value)} placeholder="Tempel isi CSV di sini..." className="font-mono text-xs" />
+        {result && (
+          <div className="text-sm border rounded p-3 bg-muted/30 space-y-1">
+            <p>✅ {result.courses} kursus, {result.modules} modul, {result.lessons} pelajaran, {result.quizzes} kuis ({result.questions} soal).</p>
+            {result.errors.length > 0 && (
+              <details className="text-xs text-destructive"><summary>{result.errors.length} error</summary>
+                <ul className="list-disc pl-4">{result.errors.map((e, i) => <li key={i}>{e}</li>)}</ul>
+              </details>
+            )}
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Tutup</Button>
+          <Button variant="gold" onClick={run} disabled={busy}>{busy && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Jalankan Import</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export default CoursesAdmin;
+
