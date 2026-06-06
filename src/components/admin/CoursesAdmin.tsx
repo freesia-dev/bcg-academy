@@ -9,7 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Pencil, ArrowLeft, Loader2, FileText, PlayCircle, FileQuestion, GripVertical } from "lucide-react";
+import { Plus, Trash2, Pencil, ArrowLeft, Loader2, FileText, PlayCircle, FileQuestion, GripVertical, ArrowUp, ArrowDown, Upload, FolderOpen, Lock } from "lucide-react";
+import { MediaPicker } from "./MediaPicker";
+import { importStructureCSV, importQuizzesCSV, type ImportResult } from "@/lib/csvImport";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type Course = {
   id: string; slug: string; title: string; description: string | null; cover_image: string | null;
@@ -17,7 +20,7 @@ type Course = {
   instructor_name: string | null; price: number; is_free: boolean; currency: string;
   is_published: boolean; sort_order: number;
 };
-type Module = { id: string; course_id: string; title: string; description: string | null; sort_order: number };
+type Module = { id: string; course_id: string; title: string; description: string | null; sort_order: number; prerequisite_module_id: string | null };
 type Lesson = {
   id: string; module_id: string; title: string; content_type: string | null;
   video_url: string | null; content_md: string | null; file_url: string | null; embed_html: string | null;
@@ -36,6 +39,7 @@ const CoursesAdmin = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Course | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const loadCourses = async () => {
     setLoading(true);
@@ -64,10 +68,14 @@ const CoursesAdmin = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center flex-wrap gap-2">
         <h3 className="text-lg font-semibold">Daftar Kursus</h3>
-        <Button variant="gold" onClick={newCourse}><Plus className="h-4 w-4 mr-1" />Tambah Kursus</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="h-4 w-4 mr-1" />Import CSV</Button>
+          <Button variant="gold" onClick={newCourse}><Plus className="h-4 w-4 mr-1" />Tambah Kursus</Button>
+        </div>
       </div>
+      <CSVImportDialog open={importOpen} onClose={() => setImportOpen(false)} onDone={loadCourses} />
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
       ) : courses.length === 0 ? (
@@ -215,8 +223,24 @@ const CourseEditor = ({ course, onBack }: { course: Course; onBack: () => void }
               <p className="text-sm text-center text-muted-foreground py-6">Belum ada modul.</p>
             ) : (
               <Accordion type="multiple" className="space-y-2">
-                {modules.map((m) => (
-                  <ModuleSection key={m.id} module={m} onChange={() => loadModules(c.id)} />
+                {modules.map((m, idx) => (
+                  <ModuleSection
+                    key={m.id}
+                    module={m}
+                    allModules={modules}
+                    isFirst={idx === 0}
+                    isLast={idx === modules.length - 1}
+                    onReorder={async (dir) => {
+                      const swapWith = modules[idx + (dir === "up" ? -1 : 1)];
+                      if (!swapWith) return;
+                      await Promise.all([
+                        supabase.from("modules").update({ sort_order: swapWith.sort_order }).eq("id", m.id),
+                        supabase.from("modules").update({ sort_order: m.sort_order }).eq("id", swapWith.id),
+                      ]);
+                      loadModules(c.id);
+                    }}
+                    onChange={() => loadModules(c.id)}
+                  />
                 ))}
               </Accordion>
             )}
@@ -228,7 +252,14 @@ const CourseEditor = ({ course, onBack }: { course: Course; onBack: () => void }
 };
 
 // ============ MODULE SECTION ============
-const ModuleSection = ({ module, onChange }: { module: Module; onChange: () => void }) => {
+const ModuleSection = ({ module, allModules, isFirst, isLast, onReorder, onChange }: {
+  module: Module;
+  allModules: Module[];
+  isFirst: boolean;
+  isLast: boolean;
+  onReorder: (dir: "up" | "down") => void;
+  onChange: () => void;
+}) => {
   const { toast } = useToast();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -250,11 +281,14 @@ const ModuleSection = ({ module, onChange }: { module: Module; onChange: () => v
   const saveModule = async () => {
     const { error } = await supabase.from("modules").update({
       title: m.title, description: m.description, sort_order: m.sort_order,
+      prerequisite_module_id: m.prerequisite_module_id || null,
     }).eq("id", m.id);
     if (error) return toast({ title: "Gagal", description: error.message, variant: "destructive" });
     setEditModule(false);
     onChange();
   };
+
+  const prereqModule = allModules.find((x) => x.id === module.prerequisite_module_id);
 
   const deleteModule = async () => {
     if (!confirm("Hapus modul ini beserta pelajaran & kuis?")) return;
@@ -277,13 +311,18 @@ const ModuleSection = ({ module, onChange }: { module: Module; onChange: () => v
     <AccordionItem value={module.id} className="border rounded-md px-3">
       <div className="flex items-center gap-2">
         <AccordionTrigger className="flex-1 hover:no-underline">
-          <div className="flex items-center gap-2 text-left">
+          <div className="flex items-center gap-2 text-left flex-wrap">
             <GripVertical className="h-4 w-4 text-muted-foreground" />
             <span className="font-semibold">{module.title}</span>
             <Badge variant="outline" className="text-xs">{lessons.length} pelajaran</Badge>
             <Badge variant="outline" className="text-xs">{quizzes.length} kuis</Badge>
+            {prereqModule && (
+              <Badge variant="secondary" className="text-xs gap-1"><Lock className="h-3 w-3" />Setelah: {prereqModule.title}</Badge>
+            )}
           </div>
         </AccordionTrigger>
+        <Button size="icon" variant="ghost" disabled={isFirst} onClick={() => onReorder("up")}><ArrowUp className="h-4 w-4" /></Button>
+        <Button size="icon" variant="ghost" disabled={isLast} onClick={() => onReorder("down")}><ArrowDown className="h-4 w-4" /></Button>
         <Button size="icon" variant="ghost" onClick={() => setEditModule(true)}><Pencil className="h-4 w-4" /></Button>
         <Button size="icon" variant="ghost" onClick={deleteModule}><Trash2 className="h-4 w-4" /></Button>
       </div>
@@ -329,6 +368,20 @@ const ModuleSection = ({ module, onChange }: { module: Module; onChange: () => v
               <div><Label>Judul</Label><Input value={m.title} onChange={(e) => setM({ ...m, title: e.target.value })} /></div>
               <div><Label>Deskripsi</Label><Textarea value={m.description || ""} onChange={(e) => setM({ ...m, description: e.target.value })} /></div>
               <div><Label>Urutan</Label><Input type="number" value={m.sort_order} onChange={(e) => setM({ ...m, sort_order: parseInt(e.target.value) || 0 })} /></div>
+              <div>
+                <Label>Prasyarat (harus lulus dulu)</Label>
+                <select
+                  className="w-full p-2 border rounded-md bg-background"
+                  value={m.prerequisite_module_id || ""}
+                  onChange={(e) => setM({ ...m, prerequisite_module_id: e.target.value || null })}
+                >
+                  <option value="">— Tidak ada —</option>
+                  {allModules.filter((x) => x.id !== m.id).map((x) => (
+                    <option key={x.id} value={x.id}>{x.title}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground mt-1">Peserta harus menyelesaikan modul prasyarat sebelum mengakses modul ini.</p>
+              </div>
             </div>
             <DialogFooter><Button variant="gold" onClick={saveModule}>Simpan</Button></DialogFooter>
           </DialogContent>
@@ -346,6 +399,7 @@ const LessonDialog = ({ lesson, onClose, onSaved }: { lesson: Lesson; onClose: (
   const { toast } = useToast();
   const [l, setL] = useState(lesson);
   const [saving, setSaving] = useState(false);
+  const [pickerFor, setPickerFor] = useState<null | "video" | "file">(null);
 
   const save = async () => {
     setSaving(true);
@@ -381,13 +435,25 @@ const LessonDialog = ({ lesson, onClose, onSaved }: { lesson: Lesson; onClose: (
             <div><Label>Durasi (menit)</Label><Input type="number" value={l.duration_min ?? ""} onChange={(e) => setL({ ...l, duration_min: e.target.value ? parseInt(e.target.value) : null })} /></div>
           </div>
           {(l.content_type === "video" || !l.content_type) && (
-            <div><Label>URL Video (YouTube / Vimeo / MP4)</Label><Input value={l.video_url || ""} onChange={(e) => setL({ ...l, video_url: e.target.value })} placeholder="https://youtube.com/watch?v=..." /></div>
+            <div>
+              <Label>URL Video (YouTube / Vimeo / MP4)</Label>
+              <div className="flex gap-2">
+                <Input value={l.video_url || ""} onChange={(e) => setL({ ...l, video_url: e.target.value })} placeholder="https://youtube.com/watch?v=..." />
+                <Button type="button" variant="outline" onClick={() => setPickerFor("video")}><FolderOpen className="h-4 w-4 mr-1" />Media</Button>
+              </div>
+            </div>
           )}
           {l.content_type === "text" && (
             <div><Label>Isi Materi</Label><Textarea rows={8} value={l.content_md || ""} onChange={(e) => setL({ ...l, content_md: e.target.value })} placeholder="Tulis materi di sini..." /></div>
           )}
           {l.content_type === "file" && (
-            <div><Label>URL File (PDF/dll)</Label><Input value={l.file_url || ""} onChange={(e) => setL({ ...l, file_url: e.target.value })} placeholder="https://..." /></div>
+            <div>
+              <Label>URL File (PDF/dll)</Label>
+              <div className="flex gap-2">
+                <Input value={l.file_url || ""} onChange={(e) => setL({ ...l, file_url: e.target.value })} placeholder="https://..." />
+                <Button type="button" variant="outline" onClick={() => setPickerFor("file")}><FolderOpen className="h-4 w-4 mr-1" />Media</Button>
+              </div>
+            </div>
           )}
           {l.content_type === "embed" && (
             <div><Label>HTML Embed</Label><Textarea rows={5} value={l.embed_html || ""} onChange={(e) => setL({ ...l, embed_html: e.target.value })} placeholder="<iframe ...></iframe>" /></div>
@@ -405,6 +471,14 @@ const LessonDialog = ({ lesson, onClose, onSaved }: { lesson: Lesson; onClose: (
           <Button variant="gold" onClick={save} disabled={saving}>{saving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Simpan</Button>
         </DialogFooter>
       </DialogContent>
+      <MediaPicker
+        open={pickerFor !== null}
+        onClose={() => setPickerFor(null)}
+        onPick={(url) => {
+          if (pickerFor === "video") setL({ ...l, video_url: url });
+          else if (pickerFor === "file") setL({ ...l, file_url: url });
+        }}
+      />
     </Dialog>
   );
 };
@@ -500,4 +574,81 @@ const QuizDialog = ({ quiz, onClose, onSaved }: { quiz: Quiz; onClose: () => voi
   );
 };
 
+// ============ CSV IMPORT DIALOG ============
+const STRUCT_TEMPLATE = `course_slug,course_title,module_title,module_sort,lesson_title,lesson_type,lesson_content,lesson_sort,lesson_duration
+barista-101,Barista Dasar,Pengenalan Kopi,0,Sejarah Kopi,video,https://youtu.be/xxxx,0,8
+barista-101,Barista Dasar,Pengenalan Kopi,0,Catatan Sejarah,text,"Kopi berasal dari ...",1,
+barista-101,Barista Dasar,Teknik Espresso,1,Latihan Tamping,video,https://youtu.be/yyyy,0,12`;
+
+const QUIZ_TEMPLATE = `course_slug,module_title,quiz_title,passing_score,question,option1,option2,option3,option4,correct_index
+barista-101,Pengenalan Kopi,Kuis Sejarah,70,Asal kopi dari?,Etiopia,Brasil,Vietnam,Indonesia,0
+barista-101,Pengenalan Kopi,Kuis Sejarah,70,Tahun penemuan?,1500,1600,1700,1800,1`;
+
+const CSVImportDialog = ({ open, onClose, onDone }: { open: boolean; onClose: () => void; onDone: () => void }) => {
+  const { toast } = useToast();
+  const [tab, setTab] = useState("struct");
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<ImportResult | null>(null);
+
+  const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    const r = new FileReader(); r.onload = () => setText(String(r.result || "")); r.readAsText(f);
+  };
+
+  const run = async () => {
+    if (!text.trim()) return toast({ title: "CSV kosong", variant: "destructive" });
+    setBusy(true);
+    const res = tab === "quiz" ? await importQuizzesCSV(text) : await importStructureCSV(text);
+    setBusy(false);
+    setResult(res);
+    toast({ title: "Import selesai", description: `${res.courses} kursus, ${res.modules} modul, ${res.lessons} pelajaran, ${res.quizzes} kuis` });
+    onDone();
+  };
+
+  const useTemplate = () => setText(tab === "quiz" ? QUIZ_TEMPLATE : STRUCT_TEMPLATE);
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Import CSV</DialogTitle></DialogHeader>
+        <Tabs value={tab} onValueChange={(v) => { setTab(v); setResult(null); }}>
+          <TabsList>
+            <TabsTrigger value="struct">Kursus / Modul / Pelajaran</TabsTrigger>
+            <TabsTrigger value="quiz">Kuis</TabsTrigger>
+          </TabsList>
+          <TabsContent value="struct" className="space-y-2">
+            <p className="text-sm text-muted-foreground">Kolom: <code className="text-xs">course_slug, course_title, module_title, module_sort, lesson_title, lesson_type (video|text|file|embed), lesson_content, lesson_sort, lesson_duration</code></p>
+          </TabsContent>
+          <TabsContent value="quiz" className="space-y-2">
+            <p className="text-sm text-muted-foreground">Kolom: <code className="text-xs">course_slug, module_title, quiz_title, passing_score, question, option1..option6, correct_index</code> (0-based). Baris dengan kuis sama akan digabung.</p>
+          </TabsContent>
+        </Tabs>
+        <div className="flex gap-2 items-center">
+          <Button asChild variant="outline" size="sm">
+            <label className="cursor-pointer"><Upload className="h-4 w-4 mr-1" />Upload .csv<input type="file" accept=".csv" hidden onChange={onFile} /></label>
+          </Button>
+          <Button variant="outline" size="sm" onClick={useTemplate}>Pakai template</Button>
+        </div>
+        <Textarea rows={10} value={text} onChange={(e) => setText(e.target.value)} placeholder="Tempel isi CSV di sini..." className="font-mono text-xs" />
+        {result && (
+          <div className="text-sm border rounded p-3 bg-muted/30 space-y-1">
+            <p>✅ {result.courses} kursus, {result.modules} modul, {result.lessons} pelajaran, {result.quizzes} kuis ({result.questions} soal).</p>
+            {result.errors.length > 0 && (
+              <details className="text-xs text-destructive"><summary>{result.errors.length} error</summary>
+                <ul className="list-disc pl-4">{result.errors.map((e, i) => <li key={i}>{e}</li>)}</ul>
+              </details>
+            )}
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Tutup</Button>
+          <Button variant="gold" onClick={run} disabled={busy}>{busy && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Jalankan Import</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export default CoursesAdmin;
+
