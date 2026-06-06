@@ -133,7 +133,7 @@ const Header = () => {
                 {item.hasDropdown && (
                   <div className="pl-4 space-y-1">
                     {programs.map((p) => (
-                      <Link key={p.id} to={`/program-pelatihan/${p.slug}`} className="block text-sm text-muted-foreground hover:text-gold py-1">
+                      <Link key={p.id} to={`/kursus/${p.slug}`} className="block text-sm text-muted-foreground hover:text-gold py-1">
                         • {p.title}
                       </Link>
                     ))}
@@ -141,9 +141,17 @@ const Header = () => {
                 )}
               </div>
             ))}
-            <Button variant="gold" className="w-full mt-4" onClick={() => window.location.href = '/registration'}>
-              Daftar Sekarang
-            </Button>
+            {user ? (
+              <>
+                <Link to="/kursus-saya" className="block text-foreground hover:text-gold font-medium py-2">Kursus Saya</Link>
+                {isAdmin && <Link to="/admin" className="block text-foreground hover:text-gold font-medium py-2">Dashboard Admin</Link>}
+                <Button variant="outline" className="w-full mt-4" onClick={handleLogout}>Keluar</Button>
+              </>
+            ) : (
+              <Button variant="gold" className="w-full mt-4" onClick={() => navigate('/auth')}>
+                Masuk / Daftar
+              </Button>
+            )}
           </nav>
         </div>
       </div>
