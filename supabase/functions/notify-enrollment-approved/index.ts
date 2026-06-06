@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
 
     const fullName = (udata.user?.user_metadata?.full_name as string) || recipient;
     const course = (enr as any).course;
-    const origin = req.headers.get("origin") || "https://bcg-academy.lovable.app";
+    const origin = req.headers.get("origin") || "https://bcg-academy.site";
 
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     if (!RESEND_API_KEY) return json({ ok: true, sent: false });
