@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Circle, PlayCircle, FileText, FileQuestion, Lock, ArrowLeft } from "lucide-react";
+import { CheckCircle2, Circle, PlayCircle, FileText, FileQuestion, Lock, ArrowLeft, Award, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
