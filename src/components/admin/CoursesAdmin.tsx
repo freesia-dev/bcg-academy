@@ -399,6 +399,7 @@ const LessonDialog = ({ lesson, onClose, onSaved }: { lesson: Lesson; onClose: (
   const { toast } = useToast();
   const [l, setL] = useState(lesson);
   const [saving, setSaving] = useState(false);
+  const [pickerFor, setPickerFor] = useState<null | "video" | "file">(null);
 
   const save = async () => {
     setSaving(true);
@@ -434,13 +435,25 @@ const LessonDialog = ({ lesson, onClose, onSaved }: { lesson: Lesson; onClose: (
             <div><Label>Durasi (menit)</Label><Input type="number" value={l.duration_min ?? ""} onChange={(e) => setL({ ...l, duration_min: e.target.value ? parseInt(e.target.value) : null })} /></div>
           </div>
           {(l.content_type === "video" || !l.content_type) && (
-            <div><Label>URL Video (YouTube / Vimeo / MP4)</Label><Input value={l.video_url || ""} onChange={(e) => setL({ ...l, video_url: e.target.value })} placeholder="https://youtube.com/watch?v=..." /></div>
+            <div>
+              <Label>URL Video (YouTube / Vimeo / MP4)</Label>
+              <div className="flex gap-2">
+                <Input value={l.video_url || ""} onChange={(e) => setL({ ...l, video_url: e.target.value })} placeholder="https://youtube.com/watch?v=..." />
+                <Button type="button" variant="outline" onClick={() => setPickerFor("video")}><FolderOpen className="h-4 w-4 mr-1" />Media</Button>
+              </div>
+            </div>
           )}
           {l.content_type === "text" && (
             <div><Label>Isi Materi</Label><Textarea rows={8} value={l.content_md || ""} onChange={(e) => setL({ ...l, content_md: e.target.value })} placeholder="Tulis materi di sini..." /></div>
           )}
           {l.content_type === "file" && (
-            <div><Label>URL File (PDF/dll)</Label><Input value={l.file_url || ""} onChange={(e) => setL({ ...l, file_url: e.target.value })} placeholder="https://..." /></div>
+            <div>
+              <Label>URL File (PDF/dll)</Label>
+              <div className="flex gap-2">
+                <Input value={l.file_url || ""} onChange={(e) => setL({ ...l, file_url: e.target.value })} placeholder="https://..." />
+                <Button type="button" variant="outline" onClick={() => setPickerFor("file")}><FolderOpen className="h-4 w-4 mr-1" />Media</Button>
+              </div>
+            </div>
           )}
           {l.content_type === "embed" && (
             <div><Label>HTML Embed</Label><Textarea rows={5} value={l.embed_html || ""} onChange={(e) => setL({ ...l, embed_html: e.target.value })} placeholder="<iframe ...></iframe>" /></div>
