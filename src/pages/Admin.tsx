@@ -151,7 +151,11 @@ const Admin = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="programs">
-          <TabsList><TabsTrigger value="programs">Program Pelatihan</TabsTrigger><TabsTrigger value="gallery">Galeri</TabsTrigger></TabsList>
+          <TabsList>
+            <TabsTrigger value="programs">Program Pelatihan</TabsTrigger>
+            <TabsTrigger value="gallery">Galeri</TabsTrigger>
+            <TabsTrigger value="payments">Pembayaran</TabsTrigger>
+          </TabsList>
 
           <TabsContent value="programs" className="space-y-4 mt-6">
             <div className="flex justify-between items-center">
