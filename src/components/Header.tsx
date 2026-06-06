@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Phone, Mail, ChevronDown } from "lucide-react";
+import { Menu, X, Phone, Mail, ChevronDown, User as UserIcon, LogOut, BookOpen, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import logoImage from "@/assets/logo-bcg.png";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ProgramLink { id: string; title: string; slug: string; }
 
