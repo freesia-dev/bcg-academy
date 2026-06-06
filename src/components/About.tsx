@@ -79,7 +79,7 @@ const About = () => {
                   <div>
                     <h4 className="font-semibold text-primary mb-2">Visi</h4>
                     <p className="text-muted-foreground text-sm">
-                      Menjadi lembaga pelatihan kerja terdepan yang menghasilkan SDM berkualitas dan berdaya saing tinggi.
+                      Menjadi lembaga pelatihan kerja unggulan di Kalimantan Timur yang menghasilkan SDM profesional, berkarakter, dan berdaya saing global.
                     </p>
                   </div>
                   
