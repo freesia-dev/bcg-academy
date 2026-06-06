@@ -110,12 +110,13 @@ const Learn = () => {
 
       const { data: enr } = await supabase
         .from("enrollments")
-        .select("status")
+        .select("status, certificate_url")
         .eq("user_id", user.id)
         .eq("course_id", c.id)
         .in("status", ["active", "completed"])
         .maybeSingle();
       setEnrolled(!!enr);
+      setCertPath((enr as any)?.certificate_url ?? null);
       if (!enr) {
         setLoading(false);
         return;
