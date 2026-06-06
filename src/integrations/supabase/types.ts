@@ -331,6 +331,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          prerequisite_module_id: string | null
           sort_order: number
           title: string
         }
@@ -339,6 +340,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          prerequisite_module_id?: string | null
           sort_order?: number
           title: string
         }
@@ -347,6 +349,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          prerequisite_module_id?: string | null
           sort_order?: number
           title?: string
         }
@@ -356,6 +359,13 @@ export type Database = {
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "modules_prerequisite_module_id_fkey"
+            columns: ["prerequisite_module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
             referencedColumns: ["id"]
           },
         ]
