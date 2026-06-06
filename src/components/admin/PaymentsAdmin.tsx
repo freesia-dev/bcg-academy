@@ -43,10 +43,15 @@ const PaymentsAdmin = () => {
 
   const setStatus = async (id: string, status: "active" | "rejected") => {
     setActionId(id);
-    const { error } = await supabase.from("enrollments").update({ status }).eq("id", id);
+    const update: any = { status };
+    if (status === "active") update.paid_at = new Date().toISOString();
+    const { error } = await supabase.from("enrollments").update(update).eq("id", id);
     setActionId(null);
     if (error) return toast({ title: "Gagal", description: error.message, variant: "destructive" });
-    toast({ title: status === "active" ? "Pembayaran disetujui" : "Pembayaran ditolak" });
+    if (status === "active") {
+      supabase.functions.invoke("notify-enrollment-approved", { body: { enrollment_id: id } }).catch(() => {});
+    }
+    toast({ title: status === "active" ? "Pembayaran disetujui & email dikirim" : "Pembayaran ditolak" });
     load();
   };
 
