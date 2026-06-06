@@ -218,6 +218,31 @@ const Learn = () => {
     toast.success("Pelajaran selesai");
   };
 
+  const allQuizzes = useMemo(() => modules.flatMap((m) => m.quizzes), [modules]);
+  const allLessonsDone = allLessons.length > 0 && allLessons.every((l) => progress.has(l.id));
+  const allQuizzesPassed = allQuizzes.every((q) => attempts[q.id]?.passed);
+  const canClaim = (allLessons.length > 0 || allQuizzes.length > 0) && allLessonsDone && allQuizzesPassed;
+
+  const openCertificate = async (path: string) => {
+    const { data, error } = await supabase.storage.from("certificates").createSignedUrl(path, 60 * 60);
+    if (error || !data?.signedUrl) { toast.error("Gagal membuka sertifikat"); return; }
+    window.open(data.signedUrl, "_blank");
+  };
+
+  const claimCertificate = async () => {
+    if (!course) return;
+    setClaiming(true);
+    const { data, error } = await supabase.functions.invoke("issue-certificate", { body: { course_id: course.id } });
+    setClaiming(false);
+    if (error) { toast.error(error.message || "Gagal menerbitkan sertifikat"); return; }
+    if ((data as any)?.error) { toast.error((data as any).error); return; }
+    const path = (data as any)?.path as string | undefined;
+    const url = (data as any)?.url as string | undefined;
+    if (path) setCertPath(path);
+    toast.success("Sertifikat berhasil diterbitkan!");
+    if (url) window.open(url, "_blank");
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen">
