@@ -77,15 +77,15 @@ const Header = () => {
                       {programs.map((p) => (
                         <Link
                           key={p.id}
-                          to={`/program-pelatihan/${p.slug}`}
+                          to={`/kursus/${p.slug}`}
                           className="block px-4 py-2 text-sm text-foreground hover:bg-secondary hover:text-gold transition-colors"
                         >
                           {p.title}
                         </Link>
                       ))}
                       <div className="border-t border-border my-1" />
-                      <Link to="/program-pelatihan" className="block px-4 py-2 text-sm font-medium text-gold hover:bg-secondary">
-                        Lihat Semua Program →
+                      <Link to="/kursus" className="block px-4 py-2 text-sm font-medium text-gold hover:bg-secondary">
+                        Lihat Semua Kursus →
                       </Link>
                     </div>
                   </div>
