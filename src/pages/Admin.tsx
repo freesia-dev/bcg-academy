@@ -17,6 +17,7 @@ import CoursesAdmin from "@/components/admin/CoursesAdmin";
 import SiteContentAdmin from "@/components/admin/SiteContentAdmin";
 import ParticipantsAdmin from "@/components/admin/ParticipantsAdmin";
 import ReportsAdmin from "@/components/admin/ReportsAdmin";
+import RolesAdmin from "@/components/admin/RolesAdmin";
 
 interface GalleryItem { id: string; title: string; description: string | null; category: string; image_url: string; sort_order: number; }
 
