@@ -471,6 +471,14 @@ const LessonDialog = ({ lesson, onClose, onSaved }: { lesson: Lesson; onClose: (
           <Button variant="gold" onClick={save} disabled={saving}>{saving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Simpan</Button>
         </DialogFooter>
       </DialogContent>
+      <MediaPicker
+        open={pickerFor !== null}
+        onClose={() => setPickerFor(null)}
+        onPick={(url) => {
+          if (pickerFor === "video") setL({ ...l, video_url: url });
+          else if (pickerFor === "file") setL({ ...l, file_url: url });
+        }}
+      />
     </Dialog>
   );
 };
