@@ -28,11 +28,15 @@ const About = () => {
             <div className="space-y-4">
               <h2 className="text-4xl font-bold text-primary">
                 Tentang{" "}
-                <span className="text-gradient">LPK Borneo Citra Gemilang</span>
+                <span className="text-gradient">BCG Academy</span>
               </h2>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                LPK Borneo Citra Gemilang adalah lembaga pelatihan kerja yang berkomitmen mencetak sumber daya manusia unggul, berkompeten, dan siap bersaing di dunia kerja. Berlokasi di Kota Bontang, kami menghadirkan program pelatihan yang dirancang sesuai kebutuhan industri.
+                LPK Borneo Citra Gemilang (BCG Academy) adalah lembaga pelatihan kerja yang berfokus pada pengembangan keterampilan praktis dan profesional di Kota Bontang dan sekitarnya. Program pelatihan dirancang berdasarkan <strong>SKKNI</strong> dengan sertifikasi resmi <strong>BNSP</strong>, didukung instruktur berpengalaman dan fasilitas yang lengkap.
               </p>
+              <blockquote className="border-l-4 border-gold pl-4 italic text-muted-foreground">
+                "Kami berkomitmen mencetak SDM yang unggul, berdaya saing, dan siap kerja melalui program pelatihan berbasis kompetensi sesuai standar nasional."
+                <footer className="not-italic mt-2 text-sm font-semibold text-primary">— Euis Paramitha, Direktur</footer>
+              </blockquote>
             </div>
 
             <div className="space-y-6">
@@ -75,7 +79,7 @@ const About = () => {
                   <div>
                     <h4 className="font-semibold text-primary mb-2">Visi</h4>
                     <p className="text-muted-foreground text-sm">
-                      Menjadi lembaga pelatihan kerja terdepan yang menghasilkan SDM berkualitas dan berdaya saing tinggi.
+                      Menjadi lembaga pelatihan kerja unggulan di Kalimantan Timur yang menghasilkan SDM profesional, berkarakter, dan berdaya saing global.
                     </p>
                   </div>
                   
