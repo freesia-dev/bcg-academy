@@ -9,7 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Pencil, ArrowLeft, Loader2, FileText, PlayCircle, FileQuestion, GripVertical } from "lucide-react";
+import { Plus, Trash2, Pencil, ArrowLeft, Loader2, FileText, PlayCircle, FileQuestion, GripVertical, ArrowUp, ArrowDown, Upload, FolderOpen, Lock } from "lucide-react";
+import { MediaPicker } from "./MediaPicker";
+import { importStructureCSV, importQuizzesCSV, type ImportResult } from "@/lib/csvImport";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type Course = {
   id: string; slug: string; title: string; description: string | null; cover_image: string | null;
@@ -17,7 +20,7 @@ type Course = {
   instructor_name: string | null; price: number; is_free: boolean; currency: string;
   is_published: boolean; sort_order: number;
 };
-type Module = { id: string; course_id: string; title: string; description: string | null; sort_order: number };
+type Module = { id: string; course_id: string; title: string; description: string | null; sort_order: number; prerequisite_module_id: string | null };
 type Lesson = {
   id: string; module_id: string; title: string; content_type: string | null;
   video_url: string | null; content_md: string | null; file_url: string | null; embed_html: string | null;
