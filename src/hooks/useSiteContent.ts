@@ -21,7 +21,18 @@ export function useSiteContent<T = any>(key: string, fallback: T): T {
         .eq("key", key)
         .maybeSingle()
         .then(({ data }) => {
-          const v = (data?.value as T) ?? fallback;
+          const raw = data?.value as any;
+          let v: T = fallback;
+          if (raw && typeof raw === "object" && !Array.isArray(raw) && fallback && typeof fallback === "object") {
+            const merged: any = { ...(fallback as any) };
+            for (const k of Object.keys(raw)) {
+              const val = raw[k];
+              if (val !== null && val !== undefined && val !== "") merged[k] = val;
+            }
+            v = merged as T;
+          } else if (raw !== null && raw !== undefined && raw !== "") {
+            v = raw as T;
+          }
           cache.set(key, v);
           listeners.get(key)?.forEach((fn) => fn(v));
         });
