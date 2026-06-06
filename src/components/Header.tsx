@@ -17,12 +17,14 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [programs, setPrograms] = useState<ProgramLink[]>([]);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, isAdmin } = useAuth();
 
   useEffect(() => {
     supabase
-      .from("programs")
+      .from("courses")
       .select("id,title,slug")
-      .eq("is_active", true)
+      .eq("is_published", true)
       .order("sort_order")
       .then(({ data }) => setPrograms(data || []));
   }, []);
@@ -31,11 +33,13 @@ const Header = () => {
 
   const navigationItems = [
     { name: "Beranda", to: "/" },
-    { name: "Program Pelatihan", to: "/program-pelatihan", hasDropdown: true },
+    { name: "Kursus", to: "/kursus", hasDropdown: true },
     { name: "Tentang Kami", to: "/tentang-kami" },
     { name: "Galeri", to: "/#gallery" },
     { name: "Kontak", to: "/kontak" },
   ];
+
+  const handleLogout = async () => { await supabase.auth.signOut(); navigate("/"); };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-md">
