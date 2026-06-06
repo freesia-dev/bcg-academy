@@ -281,11 +281,14 @@ const ModuleSection = ({ module, allModules, isFirst, isLast, onReorder, onChang
   const saveModule = async () => {
     const { error } = await supabase.from("modules").update({
       title: m.title, description: m.description, sort_order: m.sort_order,
+      prerequisite_module_id: m.prerequisite_module_id || null,
     }).eq("id", m.id);
     if (error) return toast({ title: "Gagal", description: error.message, variant: "destructive" });
     setEditModule(false);
     onChange();
   };
+
+  const prereqModule = allModules.find((x) => x.id === module.prerequisite_module_id);
 
   const deleteModule = async () => {
     if (!confirm("Hapus modul ini beserta pelajaran & kuis?")) return;
@@ -308,13 +311,18 @@ const ModuleSection = ({ module, allModules, isFirst, isLast, onReorder, onChang
     <AccordionItem value={module.id} className="border rounded-md px-3">
       <div className="flex items-center gap-2">
         <AccordionTrigger className="flex-1 hover:no-underline">
-          <div className="flex items-center gap-2 text-left">
+          <div className="flex items-center gap-2 text-left flex-wrap">
             <GripVertical className="h-4 w-4 text-muted-foreground" />
             <span className="font-semibold">{module.title}</span>
             <Badge variant="outline" className="text-xs">{lessons.length} pelajaran</Badge>
             <Badge variant="outline" className="text-xs">{quizzes.length} kuis</Badge>
+            {prereqModule && (
+              <Badge variant="secondary" className="text-xs gap-1"><Lock className="h-3 w-3" />Setelah: {prereqModule.title}</Badge>
+            )}
           </div>
         </AccordionTrigger>
+        <Button size="icon" variant="ghost" disabled={isFirst} onClick={() => onReorder("up")}><ArrowUp className="h-4 w-4" /></Button>
+        <Button size="icon" variant="ghost" disabled={isLast} onClick={() => onReorder("down")}><ArrowDown className="h-4 w-4" /></Button>
         <Button size="icon" variant="ghost" onClick={() => setEditModule(true)}><Pencil className="h-4 w-4" /></Button>
         <Button size="icon" variant="ghost" onClick={deleteModule}><Trash2 className="h-4 w-4" /></Button>
       </div>
@@ -360,6 +368,20 @@ const ModuleSection = ({ module, allModules, isFirst, isLast, onReorder, onChang
               <div><Label>Judul</Label><Input value={m.title} onChange={(e) => setM({ ...m, title: e.target.value })} /></div>
               <div><Label>Deskripsi</Label><Textarea value={m.description || ""} onChange={(e) => setM({ ...m, description: e.target.value })} /></div>
               <div><Label>Urutan</Label><Input type="number" value={m.sort_order} onChange={(e) => setM({ ...m, sort_order: parseInt(e.target.value) || 0 })} /></div>
+              <div>
+                <Label>Prasyarat (harus lulus dulu)</Label>
+                <select
+                  className="w-full p-2 border rounded-md bg-background"
+                  value={m.prerequisite_module_id || ""}
+                  onChange={(e) => setM({ ...m, prerequisite_module_id: e.target.value || null })}
+                >
+                  <option value="">— Tidak ada —</option>
+                  {allModules.filter((x) => x.id !== m.id).map((x) => (
+                    <option key={x.id} value={x.id}>{x.title}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground mt-1">Peserta harus menyelesaikan modul prasyarat sebelum mengakses modul ini.</p>
+              </div>
             </div>
             <DialogFooter><Button variant="gold" onClick={saveModule}>Simpan</Button></DialogFooter>
           </DialogContent>
