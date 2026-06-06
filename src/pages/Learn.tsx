@@ -85,6 +85,8 @@ const Learn = () => {
   const [activeKind, setActiveKind] = useState<"lesson" | "quiz">("lesson");
   const [loading, setLoading] = useState(true);
   const [enrolled, setEnrolled] = useState(false);
+  const [certPath, setCertPath] = useState<string | null>(null);
+  const [claiming, setClaiming] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
