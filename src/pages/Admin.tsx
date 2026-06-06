@@ -14,6 +14,9 @@ import { usePrograms, type Program } from "@/hooks/usePrograms";
 import PaymentsAdmin from "@/components/admin/PaymentsAdmin";
 import CertificatesAdmin from "@/components/admin/CertificatesAdmin";
 import CoursesAdmin from "@/components/admin/CoursesAdmin";
+import SiteContentAdmin from "@/components/admin/SiteContentAdmin";
+import ParticipantsAdmin from "@/components/admin/ParticipantsAdmin";
+import ReportsAdmin from "@/components/admin/ReportsAdmin";
 
 interface GalleryItem { id: string; title: string; description: string | null; category: string; image_url: string; sort_order: number; }
 
@@ -156,15 +159,33 @@ const Admin = () => {
         <Tabs defaultValue="courses">
           <TabsList className="flex-wrap h-auto">
             <TabsTrigger value="courses">Kursus (LMS)</TabsTrigger>
-            <TabsTrigger value="programs">Program Pelatihan</TabsTrigger>
-            <TabsTrigger value="gallery">Galeri</TabsTrigger>
+            <TabsTrigger value="participants">Peserta</TabsTrigger>
             <TabsTrigger value="payments">Pembayaran</TabsTrigger>
+            <TabsTrigger value="reports">Laporan</TabsTrigger>
             <TabsTrigger value="certificates">Sertifikat</TabsTrigger>
+            <TabsTrigger value="cms">CMS Beranda</TabsTrigger>
+            <TabsTrigger value="programs">Program</TabsTrigger>
+            <TabsTrigger value="gallery">Galeri</TabsTrigger>
           </TabsList>
 
           <TabsContent value="courses" className="mt-6">
             <h2 className="text-2xl font-bold mb-4">Course Builder</h2>
             <CoursesAdmin />
+          </TabsContent>
+
+          <TabsContent value="participants" className="mt-6">
+            <h2 className="text-2xl font-bold mb-4">Peserta & Progress</h2>
+            <ParticipantsAdmin />
+          </TabsContent>
+
+          <TabsContent value="reports" className="mt-6">
+            <h2 className="text-2xl font-bold mb-4">Laporan Pembayaran</h2>
+            <ReportsAdmin />
+          </TabsContent>
+
+          <TabsContent value="cms" className="mt-6">
+            <h2 className="text-2xl font-bold mb-4">CMS Beranda</h2>
+            <SiteContentAdmin />
           </TabsContent>
 
           <TabsContent value="programs" className="space-y-4 mt-6">
