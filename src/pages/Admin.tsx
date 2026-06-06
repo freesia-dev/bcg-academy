@@ -153,13 +153,19 @@ const Admin = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="programs">
-          <TabsList>
+        <Tabs defaultValue="courses">
+          <TabsList className="flex-wrap h-auto">
+            <TabsTrigger value="courses">Kursus (LMS)</TabsTrigger>
             <TabsTrigger value="programs">Program Pelatihan</TabsTrigger>
             <TabsTrigger value="gallery">Galeri</TabsTrigger>
             <TabsTrigger value="payments">Pembayaran</TabsTrigger>
             <TabsTrigger value="certificates">Sertifikat</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="courses" className="mt-6">
+            <h2 className="text-2xl font-bold mb-4">Course Builder</h2>
+            <CoursesAdmin />
+          </TabsContent>
 
           <TabsContent value="programs" className="space-y-4 mt-6">
             <div className="flex justify-between items-center">
