@@ -13,6 +13,7 @@ import { LogOut, Loader2, Plus, Trash2, Pencil, X, ArrowLeft } from "lucide-reac
 import { usePrograms, type Program } from "@/hooks/usePrograms";
 import PaymentsAdmin from "@/components/admin/PaymentsAdmin";
 import CertificatesAdmin from "@/components/admin/CertificatesAdmin";
+import CoursesAdmin from "@/components/admin/CoursesAdmin";
 
 interface GalleryItem { id: string; title: string; description: string | null; category: string; image_url: string; sort_order: number; }
 

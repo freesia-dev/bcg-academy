@@ -243,7 +243,7 @@ const ModuleSection = ({ module, onChange }: { module: Module; onChange: () => v
       supabase.from("quizzes").select("*").eq("module_id", module.id),
     ]);
     setLessons((ls as Lesson[]) || []);
-    setQuizzes((qs as Quiz[]) || []);
+    setQuizzes(((qs as any[]) || []).map((x) => ({ ...x, questions: Array.isArray(x.questions) ? x.questions : [] })) as Quiz[]);
   };
   useEffect(() => { load(); }, [module.id]);
 
