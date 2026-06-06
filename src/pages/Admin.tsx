@@ -31,6 +31,7 @@ const Admin = () => {
   const { toast } = useToast();
   const [checking, setChecking] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
   const [userEmail, setUserEmail] = useState<string>("");
   const { programs, refetch } = usePrograms(false);
   const [editingProgram, setEditingProgram] = useState<Partial<Program> | null>(null);
