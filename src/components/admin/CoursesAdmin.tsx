@@ -39,6 +39,7 @@ const CoursesAdmin = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Course | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const loadCourses = async () => {
     setLoading(true);
@@ -67,10 +68,14 @@ const CoursesAdmin = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center flex-wrap gap-2">
         <h3 className="text-lg font-semibold">Daftar Kursus</h3>
-        <Button variant="gold" onClick={newCourse}><Plus className="h-4 w-4 mr-1" />Tambah Kursus</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="h-4 w-4 mr-1" />Import CSV</Button>
+          <Button variant="gold" onClick={newCourse}><Plus className="h-4 w-4 mr-1" />Tambah Kursus</Button>
+        </div>
       </div>
+      <CSVImportDialog open={importOpen} onClose={() => setImportOpen(false)} onDone={loadCourses} />
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
       ) : courses.length === 0 ? (
