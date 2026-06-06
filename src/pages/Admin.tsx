@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut, Loader2, Plus, Trash2, Pencil, X, ArrowLeft } from "lucide-react";
 import { usePrograms, type Program } from "@/hooks/usePrograms";
+import PaymentsAdmin from "@/components/admin/PaymentsAdmin";
 
 interface GalleryItem { id: string; title: string; description: string | null; category: string; image_url: string; sort_order: number; }
 
