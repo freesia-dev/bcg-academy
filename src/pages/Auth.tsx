@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
 const signupSchema = z.object({
@@ -85,15 +84,15 @@ const Auth = () => {
 
   const handleGoogle = async () => {
     setLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/auth" });
-    if (result.error) {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin + "/auth" },
+    });
+    if (error) {
       setLoading(false);
-      toast({ title: "Google login gagal", description: String(result.error), variant: "destructive" });
+      toast({ title: "Google login gagal", description: String(error), variant: "destructive" });
       return;
     }
-    if (result.redirected) return;
-    const { data } = await supabase.auth.getSession();
-    if (data.session) routeAfterAuth(data.session.user.id);
   };
 
   const handleForgot = async () => {
