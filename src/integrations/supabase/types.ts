@@ -14,6 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
+      certificate_templates: {
+        Row: {
+          accent_color: string
+          bg_color: string
+          body_text: string
+          cert_prefix: string
+          course_id: string
+          created_at: string
+          date_format: string
+          footer_note: string | null
+          heading: string
+          id: string
+          organization_location: string
+          organization_name: string
+          signer_name: string
+          signer_title: string
+          subheading: string
+          text_color: string
+          updated_at: string
+        }
+        Insert: {
+          accent_color?: string
+          bg_color?: string
+          body_text?: string
+          cert_prefix?: string
+          course_id: string
+          created_at?: string
+          date_format?: string
+          footer_note?: string | null
+          heading?: string
+          id?: string
+          organization_location?: string
+          organization_name?: string
+          signer_name?: string
+          signer_title?: string
+          subheading?: string
+          text_color?: string
+          updated_at?: string
+        }
+        Update: {
+          accent_color?: string
+          bg_color?: string
+          body_text?: string
+          cert_prefix?: string
+          course_id?: string
+          created_at?: string
+          date_format?: string
+          footer_note?: string | null
+          heading?: string
+          id?: string
+          organization_location?: string
+          organization_name?: string
+          signer_name?: string
+          signer_title?: string
+          subheading?: string
+          text_color?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificate_templates_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: true
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           capacity: string | null

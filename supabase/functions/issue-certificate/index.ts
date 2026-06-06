@@ -26,10 +26,38 @@ Deno.serve(async (req) => {
     if (userErr || !userData.user) return json({ error: "Unauthorized" }, 401);
     const user = userData.user;
 
-    const { course_id } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const course_id = body?.course_id as string | undefined;
+    const preview = !!body?.preview;
     if (!course_id) return json({ error: "course_id required" }, 400);
 
-    // Enrollment
+    const { data: course } = await admin
+      .from("courses").select("id, title").eq("id", course_id).maybeSingle();
+    if (!course) return json({ error: "Kursus tidak ditemukan" }, 404);
+
+    const { data: template } = await admin
+      .from("certificate_templates").select("*").eq("course_id", course_id).maybeSingle();
+    const tpl = template || defaultTemplate();
+
+    // PREVIEW: any admin can request a preview PDF without enrollment
+    if (preview) {
+      const { data: roles } = await admin
+        .from("user_roles").select("role").eq("user_id", user.id);
+      const isAdmin = (roles || []).some((r: any) => r.role === "admin");
+      if (!isAdmin) return json({ error: "Forbidden" }, 403);
+      const pdfBytes = await buildPdf({
+        name: body?.preview_name || "Nama Peserta Contoh",
+        course: course.title,
+        certNumber: `${tpl.cert_prefix}/${new Date().getFullYear()}/PREVIEW`,
+        issueDate: formatDate(new Date(), tpl.date_format),
+        tpl,
+      });
+      return new Response(pdfBytes, {
+        headers: { ...corsHeaders, "Content-Type": "application/pdf" },
+      });
+    }
+
+    // ENROLLMENT
     const { data: enrollment } = await admin
       .from("enrollments")
       .select("id, status, certificate_url")
@@ -39,7 +67,6 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (!enrollment) return json({ error: "Tidak terdaftar di kursus ini." }, 403);
 
-    // If already issued, return existing signed url
     if (enrollment.certificate_url) {
       const { data: signed } = await admin.storage
         .from("certificates")
@@ -47,28 +74,14 @@ Deno.serve(async (req) => {
       return json({ url: signed?.signedUrl, path: enrollment.certificate_url, already_issued: true });
     }
 
-    // Course
-    const { data: course } = await admin
-      .from("courses")
-      .select("id, title")
-      .eq("id", course_id)
-      .maybeSingle();
-    if (!course) return json({ error: "Kursus tidak ditemukan" }, 404);
-
-    // Profile
     const { data: profile } = await admin
-      .from("profiles")
-      .select("full_name")
-      .eq("id", user.id)
-      .maybeSingle();
+      .from("profiles").select("full_name").eq("id", user.id).maybeSingle();
     const participantName = profile?.full_name || user.email || "Peserta";
 
-    // Verify completion: all lessons completed + all quizzes passed
+    // Verify completion
     const { data: modules } = await admin.from("modules").select("id").eq("course_id", course_id);
     const modIds = (modules || []).map((m) => m.id);
-
-    let lessonIds: string[] = [];
-    let quizIds: string[] = [];
+    let lessonIds: string[] = [], quizIds: string[] = [];
     if (modIds.length) {
       const [{ data: lessons }, { data: quizzes }] = await Promise.all([
         admin.from("lessons").select("id").in("module_id", modIds),
@@ -77,64 +90,40 @@ Deno.serve(async (req) => {
       lessonIds = (lessons || []).map((l) => l.id);
       quizIds = (quizzes || []).map((q) => q.id);
     }
-
-    if (lessonIds.length === 0 && quizIds.length === 0) {
-      return json({ error: "Kursus belum memiliki materi." }, 400);
-    }
+    if (lessonIds.length === 0 && quizIds.length === 0) return json({ error: "Kursus belum memiliki materi." }, 400);
 
     if (lessonIds.length) {
       const { data: prog } = await admin
-        .from("lesson_progress")
-        .select("lesson_id")
-        .eq("user_id", user.id)
-        .in("lesson_id", lessonIds);
-      const done = new Set((prog || []).map((p) => p.lesson_id));
-      if (done.size < lessonIds.length) {
+        .from("lesson_progress").select("lesson_id")
+        .eq("user_id", user.id).in("lesson_id", lessonIds);
+      if (new Set((prog || []).map((p) => p.lesson_id)).size < lessonIds.length)
         return json({ error: "Selesaikan semua pelajaran terlebih dahulu." }, 400);
-      }
     }
-
     if (quizIds.length) {
       const { data: atts } = await admin
-        .from("quiz_attempts")
-        .select("quiz_id, passed")
-        .eq("user_id", user.id)
-        .in("quiz_id", quizIds);
-      const passedSet = new Set((atts || []).filter((a) => a.passed).map((a) => a.quiz_id));
-      if (passedSet.size < quizIds.length) {
-        return json({ error: "Lulus semua kuis terlebih dahulu." }, 400);
-      }
+        .from("quiz_attempts").select("quiz_id, passed")
+        .eq("user_id", user.id).in("quiz_id", quizIds);
+      const passed = new Set((atts || []).filter((a) => a.passed).map((a) => a.quiz_id));
+      if (passed.size < quizIds.length) return json({ error: "Lulus semua kuis terlebih dahulu." }, 400);
     }
 
-    // Generate certificate PDF
-    const certNumber = `LPK-BCG/${new Date().getFullYear()}/${enrollment.id.slice(0, 8).toUpperCase()}`;
-    const issueDate = new Date().toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric" });
-    const pdfBytes = await buildPdf({
-      name: participantName,
-      course: course.title,
-      certNumber,
-      issueDate,
-    });
+    const certNumber = `${tpl.cert_prefix}/${new Date().getFullYear()}/${enrollment.id.slice(0, 8).toUpperCase()}`;
+    const issueDate = formatDate(new Date(), tpl.date_format);
+    const pdfBytes = await buildPdf({ name: participantName, course: course.title, certNumber, issueDate, tpl });
 
     const path = `${user.id}/${enrollment.id}.pdf`;
     const { error: upErr } = await admin.storage
-      .from("certificates")
-      .upload(path, pdfBytes, { contentType: "application/pdf", upsert: true });
+      .from("certificates").upload(path, pdfBytes, { contentType: "application/pdf", upsert: true });
     if (upErr) return json({ error: upErr.message }, 500);
 
-    await admin
-      .from("enrollments")
-      .update({
-        certificate_url: path,
-        status: "completed",
-        completed_at: new Date().toISOString(),
-      })
-      .eq("id", enrollment.id);
+    await admin.from("enrollments").update({
+      certificate_url: path,
+      status: "completed",
+      completed_at: new Date().toISOString(),
+    }).eq("id", enrollment.id);
 
     const { data: signed } = await admin.storage
-      .from("certificates")
-      .createSignedUrl(path, 60 * 60 * 24 * 7);
-
+      .from("certificates").createSignedUrl(path, 60 * 60 * 24 * 7);
     return json({ url: signed?.signedUrl, path, cert_number: certNumber });
   } catch (e) {
     console.error(e);
@@ -144,14 +133,46 @@ Deno.serve(async (req) => {
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    status, headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
 
-async function buildPdf(opts: { name: string; course: string; certNumber: string; issueDate: string }) {
+function defaultTemplate() {
+  return {
+    heading: "SERTIFIKAT KELULUSAN",
+    subheading: "Diberikan kepada",
+    body_text: 'atas keberhasilan menyelesaikan kursus "{course}" dengan memenuhi seluruh modul, pelajaran, dan uji kompetensi yang dipersyaratkan.',
+    organization_name: "LPK BORNEO CITRA GEMILANG",
+    organization_location: "Bontang, Kalimantan Timur",
+    signer_name: "Direktur LPK BCG",
+    signer_title: "Direktur",
+    cert_prefix: "LPK-BCG",
+    date_format: "long",
+    accent_color: "#C79E2E",
+    bg_color: "#FCFBED",
+    text_color: "#0F0F1A",
+    footer_note: null,
+  };
+}
+
+function formatDate(d: Date, fmt: string) {
+  if (fmt === "short") return d.toLocaleDateString("id-ID");
+  if (fmt === "iso") return d.toISOString().slice(0, 10);
+  return d.toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric" });
+}
+
+function hexToRgb(hex: string) {
+  const h = (hex || "").replace("#", "").trim();
+  const v = h.length === 3 ? h.split("").map((c) => c + c).join("") : h.padEnd(6, "0").slice(0, 6);
+  const r = parseInt(v.slice(0, 2), 16) / 255;
+  const g = parseInt(v.slice(2, 4), 16) / 255;
+  const b = parseInt(v.slice(4, 6), 16) / 255;
+  return rgb(isNaN(r) ? 0 : r, isNaN(g) ? 0 : g, isNaN(b) ? 0 : b);
+}
+
+async function buildPdf(opts: { name: string; course: string; certNumber: string; issueDate: string; tpl: any }) {
+  const { name, course, certNumber, issueDate, tpl } = opts;
   const doc = await PDFDocument.create();
-  // A4 landscape: 842 x 595
   const page = doc.addPage([842, 595]);
   const { width, height } = page.getSize();
   const helv = await doc.embedFont(StandardFonts.Helvetica);
@@ -159,53 +180,69 @@ async function buildPdf(opts: { name: string; course: string; certNumber: string
   const helvObl = await doc.embedFont(StandardFonts.HelveticaOblique);
   const timesBold = await doc.embedFont(StandardFonts.TimesRomanBold);
 
-  const gold = rgb(0.78, 0.62, 0.18);
-  const dark = rgb(0.06, 0.06, 0.1);
-  const muted = rgb(0.3, 0.3, 0.35);
+  const accent = hexToRgb(tpl.accent_color);
+  const bg = hexToRgb(tpl.bg_color);
+  const text = hexToRgb(tpl.text_color);
+  const muted = rgb(0.4, 0.4, 0.45);
 
-  // Background border
-  page.drawRectangle({ x: 0, y: 0, width, height, color: rgb(0.99, 0.98, 0.93) });
-  page.drawRectangle({ x: 20, y: 20, width: width - 40, height: height - 40, borderColor: gold, borderWidth: 3 });
-  page.drawRectangle({ x: 32, y: 32, width: width - 64, height: height - 64, borderColor: dark, borderWidth: 0.8 });
+  page.drawRectangle({ x: 0, y: 0, width, height, color: bg });
+  page.drawRectangle({ x: 20, y: 20, width: width - 40, height: height - 40, borderColor: accent, borderWidth: 3 });
+  page.drawRectangle({ x: 32, y: 32, width: width - 64, height: height - 64, borderColor: text, borderWidth: 0.8 });
 
-  const center = (text: string, y: number, size: number, font = helv, color = dark) => {
-    const w = font.widthOfTextAtSize(text, size);
-    page.drawText(text, { x: (width - w) / 2, y, size, font, color });
+  const center = (t: string, y: number, size: number, font = helv, color = text) => {
+    if (!t) return;
+    const w = font.widthOfTextAtSize(t, size);
+    page.drawText(t, { x: (width - w) / 2, y, size, font, color });
   };
 
-  center("LPK BORNEO CITRA GEMILANG", height - 90, 14, helvBold, gold);
-  center("Bontang, Kalimantan Timur", height - 108, 10, helvObl, muted);
+  center(tpl.organization_name, height - 90, 14, helvBold, accent);
+  center(tpl.organization_location, height - 108, 10, helvObl, muted);
 
-  center("SERTIFIKAT KELULUSAN", height - 165, 36, timesBold, dark);
-  // gold underline
+  center(tpl.heading, height - 165, 36, timesBold, text);
   const underlineW = 260;
-  page.drawRectangle({ x: (width - underlineW) / 2, y: height - 178, width: underlineW, height: 2, color: gold });
+  page.drawRectangle({ x: (width - underlineW) / 2, y: height - 178, width: underlineW, height: 2, color: accent });
 
-  center("Diberikan kepada", height - 230, 13, helvObl, muted);
-  center(opts.name.toUpperCase(), height - 275, 28, helvBold, dark);
+  center(tpl.subheading, height - 230, 13, helvObl, muted);
+  center(name.toUpperCase(), height - 275, 28, helvBold, text);
 
-  center("atas keberhasilan menyelesaikan kursus", height - 320, 13, helv, muted);
-  center(`"${opts.course}"`, height - 355, 18, helvBold, gold);
+  // Body text with placeholders
+  const body = (tpl.body_text || "").replace(/\{course\}/g, course).replace(/\{name\}/g, name);
+  const bodyLines = wrap(body, helv, 14, width - 180);
+  let y = height - 320;
+  bodyLines.forEach((line) => {
+    center(line, y, 13, helv, muted);
+    y -= 18;
+  });
 
-  center(
-    "dengan memenuhi seluruh modul, pelajaran, dan uji kompetensi yang dipersyaratkan.",
-    height - 385,
-    11,
-    helv,
-    muted,
-  );
-
-  // Footer line: cert number left, date right
   const footerY = 90;
-  page.drawText(`No. Sertifikat: ${opts.certNumber}`, { x: 80, y: footerY, size: 10, font: helv, color: muted });
-  const dateText = `Bontang, ${opts.issueDate}`;
+  page.drawText(`No. Sertifikat: ${certNumber}`, { x: 80, y: footerY, size: 10, font: helv, color: muted });
+  const dateText = `${tpl.organization_location.split(",")[0]}, ${issueDate}`;
   const dateW = helv.widthOfTextAtSize(dateText, 10);
   page.drawText(dateText, { x: width - 80 - dateW, y: footerY, size: 10, font: helv, color: muted });
 
-  // Signature placeholder
-  const sigX = width - 220;
-  page.drawLine({ start: { x: sigX, y: footerY - 10 }, end: { x: sigX + 140, y: footerY - 10 }, color: dark, thickness: 0.6 });
-  page.drawText("Direktur LPK BCG", { x: sigX + 22, y: footerY - 26, size: 10, font: helvBold, color: dark });
+  const sigX = width - 240;
+  page.drawLine({ start: { x: sigX, y: footerY - 14 }, end: { x: sigX + 160, y: footerY - 14 }, color: text, thickness: 0.6 });
+  page.drawText(tpl.signer_name, { x: sigX + 8, y: footerY - 30, size: 11, font: helvBold, color: text });
+  page.drawText(tpl.signer_title, { x: sigX + 8, y: footerY - 44, size: 9, font: helv, color: muted });
+
+  if (tpl.footer_note) {
+    center(tpl.footer_note, 50, 9, helvObl, muted);
+  }
 
   return await doc.save();
+}
+
+function wrap(text: string, font: any, size: number, maxWidth: number) {
+  const words = (text || "").split(/\s+/);
+  const lines: string[] = [];
+  let cur = "";
+  for (const w of words) {
+    const test = cur ? cur + " " + w : w;
+    if (font.widthOfTextAtSize(test, size) > maxWidth) {
+      if (cur) lines.push(cur);
+      cur = w;
+    } else cur = test;
+  }
+  if (cur) lines.push(cur);
+  return lines.slice(0, 4);
 }
