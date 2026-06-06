@@ -10,7 +10,13 @@ import ProgramDetail from "./pages/ProgramDetail";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
+import CoursesPage from "./pages/CoursesPage";
+import CourseDetail from "./pages/CourseDetail";
+import MyCourses from "./pages/MyCourses";
+import Learn from "./pages/Learn";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,7 +35,12 @@ const App = () => (
           <Route path="/tentang-kami" element={<AboutPage />} />
           <Route path="/kontak" element={<ContactPage />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/kursus" element={<CoursesPage />} />
+          <Route path="/kursus/:slug" element={<CourseDetail />} />
+          <Route path="/kursus-saya" element={<ProtectedRoute><MyCourses /></ProtectedRoute>} />
+          <Route path="/learn/:slug" element={<ProtectedRoute><Learn /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
