@@ -308,12 +308,24 @@ const Learn = () => {
               </Link>
               <h1 className="text-2xl md:text-3xl font-bold text-primary mt-1">{course.title}</h1>
             </div>
-            <div className="min-w-[200px]">
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-muted-foreground">Progress</span>
-                <span className="font-semibold text-gold">{completionPct}%</span>
+            <div className="flex items-center gap-3 flex-wrap">
+              {certPath ? (
+                <Button variant="gold" onClick={() => openCertificate(certPath)}>
+                  <Award className="h-4 w-4 mr-2" /> Unduh Sertifikat
+                </Button>
+              ) : canClaim ? (
+                <Button variant="gold" onClick={claimCertificate} disabled={claiming}>
+                  {claiming ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Award className="h-4 w-4 mr-2" />}
+                  Klaim Sertifikat
+                </Button>
+              ) : null}
+              <div className="min-w-[200px]">
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-muted-foreground">Progress</span>
+                  <span className="font-semibold text-gold">{completionPct}%</span>
+                </div>
+                <Progress value={completionPct} />
               </div>
-              <Progress value={completionPct} />
             </div>
           </div>
 
