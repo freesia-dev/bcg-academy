@@ -60,8 +60,9 @@ const Footer = () => {
               </div>
               <div className="flex items-start gap-3">
                 <MapPin size={16} className="text-gold mt-0.5" />
-                <span className="text-sm">Jl. Brigjend Katamso No. 41B<br />Bontang, Kalimantan Timur</span>
+                <span className="text-sm">Jl. Dewi Sartika Gg. Kulintang 4 No. 21<br />Kel. Bontang Baru, Kec. Bontang Utara<br />Kota Bontang 75311</span>
               </div>
+              <p className="text-xs text-primary-foreground/60 pt-2">NIB: 3001250056199</p>
             </div>
           </div>
 
