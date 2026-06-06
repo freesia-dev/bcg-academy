@@ -124,6 +124,30 @@ Deno.serve(async (req) => {
 
     const { data: signed } = await admin.storage
       .from("certificates").createSignedUrl(path, 60 * 60 * 24 * 7);
+
+    // Best-effort email notification
+    try {
+      const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+      if (RESEND_API_KEY && user.email) {
+        await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from: "BCG Academy <onboarding@resend.dev>",
+            to: [user.email],
+            subject: `🎓 Sertifikat Anda telah terbit - ${course.title}`,
+            html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:24px">
+              <h2 style="color:#C79E2E">Selamat, ${participantName}! 🎉</h2>
+              <p>Anda telah menyelesaikan kursus <strong>${course.title}</strong>.</p>
+              <p>Nomor sertifikat: <strong>${certNumber}</strong></p>
+              ${signed?.signedUrl ? `<p style="text-align:center;margin:24px 0"><a href="${signed.signedUrl}" style="background:#C79E2E;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">Unduh Sertifikat</a></p>` : ""}
+              <p style="font-size:13px;color:#666">Link unduhan berlaku 7 hari. Anda juga dapat mengunduh ulang kapan saja dari "Kursus Saya".</p>
+            </div>`,
+          }),
+        });
+      }
+    } catch (e) { console.warn("cert email failed", e); }
+
     return json({ url: signed?.signedUrl, path, cert_number: certNumber });
   } catch (e) {
     console.error(e);
