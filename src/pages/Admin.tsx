@@ -171,7 +171,16 @@ const Admin = () => {
             <TabsTrigger value="cms">CMS Beranda</TabsTrigger>
             <TabsTrigger value="programs">Program</TabsTrigger>
             <TabsTrigger value="gallery">Galeri</TabsTrigger>
+            {isSuperadmin && <TabsTrigger value="roles">Role User</TabsTrigger>}
           </TabsList>
+
+          {isSuperadmin && (
+            <TabsContent value="roles" className="mt-6">
+              <h2 className="text-2xl font-bold mb-1">Kelola Role Pengguna</h2>
+              <p className="text-sm text-muted-foreground mb-4">Hanya superadmin yang bisa mengubah role pengguna.</p>
+              <RolesAdmin />
+            </TabsContent>
+          )}
 
           <TabsContent value="courses" className="mt-6">
             <h2 className="text-2xl font-bold mb-4">Course Builder</h2>
