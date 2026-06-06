@@ -247,6 +247,11 @@ const Admin = () => {
               ))}
             </div>
           </TabsContent>
+
+          <TabsContent value="payments" className="mt-6">
+            <h2 className="text-2xl font-bold mb-4">Verifikasi Pembayaran</h2>
+            <PaymentsAdmin />
+          </TabsContent>
         </Tabs>
       </main>
     </div>
