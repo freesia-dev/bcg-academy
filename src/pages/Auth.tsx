@@ -57,7 +57,7 @@ const Auth = () => {
     const parsed = loginSchema.safeParse({ email: loginEmail, password: loginPassword });
     if (!parsed.success) return toast({ title: "Periksa input", description: parsed.error.issues[0].message, variant: "destructive" });
     setLoading(true);
-    const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
+    const { data, error } = await supabase.auth.signInWithPassword({ email: parsed.data.email, password: parsed.data.password });
     setLoading(false);
     if (error) return toast({ title: "Login gagal", description: error.message, variant: "destructive" });
     toast({ title: "Berhasil masuk" });
