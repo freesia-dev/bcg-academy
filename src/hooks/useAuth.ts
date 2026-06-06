@@ -6,12 +6,14 @@ export interface AuthState {
   session: Session | null;
   user: User | null;
   isAdmin: boolean;
+  isSuperadmin: boolean;
   loading: boolean;
 }
 
 export const useAuth = (): AuthState => {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
