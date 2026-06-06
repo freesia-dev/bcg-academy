@@ -223,8 +223,24 @@ const CourseEditor = ({ course, onBack }: { course: Course; onBack: () => void }
               <p className="text-sm text-center text-muted-foreground py-6">Belum ada modul.</p>
             ) : (
               <Accordion type="multiple" className="space-y-2">
-                {modules.map((m) => (
-                  <ModuleSection key={m.id} module={m} onChange={() => loadModules(c.id)} />
+                {modules.map((m, idx) => (
+                  <ModuleSection
+                    key={m.id}
+                    module={m}
+                    allModules={modules}
+                    isFirst={idx === 0}
+                    isLast={idx === modules.length - 1}
+                    onReorder={async (dir) => {
+                      const swapWith = modules[idx + (dir === "up" ? -1 : 1)];
+                      if (!swapWith) return;
+                      await Promise.all([
+                        supabase.from("modules").update({ sort_order: swapWith.sort_order }).eq("id", m.id),
+                        supabase.from("modules").update({ sort_order: m.sort_order }).eq("id", swapWith.id),
+                      ]);
+                      loadModules(c.id);
+                    }}
+                    onChange={() => loadModules(c.id)}
+                  />
                 ))}
               </Accordion>
             )}
@@ -236,7 +252,14 @@ const CourseEditor = ({ course, onBack }: { course: Course; onBack: () => void }
 };
 
 // ============ MODULE SECTION ============
-const ModuleSection = ({ module, onChange }: { module: Module; onChange: () => void }) => {
+const ModuleSection = ({ module, allModules, isFirst, isLast, onReorder, onChange }: {
+  module: Module;
+  allModules: Module[];
+  isFirst: boolean;
+  isLast: boolean;
+  onReorder: (dir: "up" | "down") => void;
+  onChange: () => void;
+}) => {
   const { toast } = useToast();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
