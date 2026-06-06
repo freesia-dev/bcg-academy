@@ -94,10 +94,29 @@ const Header = () => {
             ))}
           </nav>
 
-          <div className="flex items-center gap-4">
-            <Button variant="gold" className="hidden md:inline-flex" onClick={() => window.location.href = '/registration'}>
-              Daftar Sekarang
-            </Button>
+          <div className="flex items-center gap-2">
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <UserIcon size={16} />
+                    <span className="hidden md:inline max-w-[120px] truncate">{user.email}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-background">
+                  <DropdownMenuLabel className="truncate">{user.email}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate("/kursus-saya")}><BookOpen className="mr-2 h-4 w-4" />Kursus Saya</DropdownMenuItem>
+                  {isAdmin && <DropdownMenuItem onClick={() => navigate("/admin")}><LayoutDashboard className="mr-2 h-4 w-4" />Dashboard Admin</DropdownMenuItem>}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}><LogOut className="mr-2 h-4 w-4" />Keluar</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button variant="gold" className="hidden md:inline-flex" onClick={() => navigate('/auth')}>
+                Masuk / Daftar
+              </Button>
+            )}
             <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </Button>
