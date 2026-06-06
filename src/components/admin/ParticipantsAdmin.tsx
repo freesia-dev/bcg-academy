@@ -33,7 +33,7 @@ const ParticipantsAdmin = () => {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [{ data: enrolls }, { data: profiles }, { data: courses }, { data: modules }, { data: lessons }, { data: quizzes }, { data: progress }, { data: attempts }, { data: users }] =
+      const [{ data: enrolls }, { data: profiles }, { data: courses }, { data: modules }, { data: lessons }, { data: quizzes }, { data: progress }, { data: attempts }] =
         await Promise.all([
           supabase.from("enrollments").select("id, user_id, course_id, status, enrolled_at, completed_at"),
           supabase.from("profiles").select("id, full_name, phone"),
@@ -43,7 +43,6 @@ const ParticipantsAdmin = () => {
           supabase.from("quizzes").select("id, module_id"),
           supabase.from("lesson_progress").select("user_id, lesson_id"),
           supabase.from("quiz_attempts").select("user_id, quiz_id, passed"),
-          supabase.auth.admin.listUsers ? Promise.resolve({ data: { users: [] } } as any) : Promise.resolve({ data: { users: [] } } as any),
         ]);
 
       const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
