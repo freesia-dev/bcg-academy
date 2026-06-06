@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Circle, PlayCircle, FileText, FileQuestion, Lock, ArrowLeft } from "lucide-react";
+import { CheckCircle2, Circle, PlayCircle, FileText, FileQuestion, Lock, ArrowLeft, Award, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -85,6 +85,8 @@ const Learn = () => {
   const [activeKind, setActiveKind] = useState<"lesson" | "quiz">("lesson");
   const [loading, setLoading] = useState(true);
   const [enrolled, setEnrolled] = useState(false);
+  const [certPath, setCertPath] = useState<string | null>(null);
+  const [claiming, setClaiming] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -108,12 +110,13 @@ const Learn = () => {
 
       const { data: enr } = await supabase
         .from("enrollments")
-        .select("status")
+        .select("status, certificate_url")
         .eq("user_id", user.id)
         .eq("course_id", c.id)
         .in("status", ["active", "completed"])
         .maybeSingle();
       setEnrolled(!!enr);
+      setCertPath((enr as any)?.certificate_url ?? null);
       if (!enr) {
         setLoading(false);
         return;
@@ -215,6 +218,31 @@ const Learn = () => {
     toast.success("Pelajaran selesai");
   };
 
+  const allQuizzes = useMemo(() => modules.flatMap((m) => m.quizzes), [modules]);
+  const allLessonsDone = allLessons.length > 0 && allLessons.every((l) => progress.has(l.id));
+  const allQuizzesPassed = allQuizzes.every((q) => attempts[q.id]?.passed);
+  const canClaim = (allLessons.length > 0 || allQuizzes.length > 0) && allLessonsDone && allQuizzesPassed;
+
+  const openCertificate = async (path: string) => {
+    const { data, error } = await supabase.storage.from("certificates").createSignedUrl(path, 60 * 60);
+    if (error || !data?.signedUrl) { toast.error("Gagal membuka sertifikat"); return; }
+    window.open(data.signedUrl, "_blank");
+  };
+
+  const claimCertificate = async () => {
+    if (!course) return;
+    setClaiming(true);
+    const { data, error } = await supabase.functions.invoke("issue-certificate", { body: { course_id: course.id } });
+    setClaiming(false);
+    if (error) { toast.error(error.message || "Gagal menerbitkan sertifikat"); return; }
+    if ((data as any)?.error) { toast.error((data as any).error); return; }
+    const path = (data as any)?.path as string | undefined;
+    const url = (data as any)?.url as string | undefined;
+    if (path) setCertPath(path);
+    toast.success("Sertifikat berhasil diterbitkan!");
+    if (url) window.open(url, "_blank");
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen">
@@ -280,12 +308,24 @@ const Learn = () => {
               </Link>
               <h1 className="text-2xl md:text-3xl font-bold text-primary mt-1">{course.title}</h1>
             </div>
-            <div className="min-w-[200px]">
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-muted-foreground">Progress</span>
-                <span className="font-semibold text-gold">{completionPct}%</span>
+            <div className="flex items-center gap-3 flex-wrap">
+              {certPath ? (
+                <Button variant="gold" onClick={() => openCertificate(certPath)}>
+                  <Award className="h-4 w-4 mr-2" /> Unduh Sertifikat
+                </Button>
+              ) : canClaim ? (
+                <Button variant="gold" onClick={claimCertificate} disabled={claiming}>
+                  {claiming ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Award className="h-4 w-4 mr-2" />}
+                  Klaim Sertifikat
+                </Button>
+              ) : null}
+              <div className="min-w-[200px]">
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-muted-foreground">Progress</span>
+                  <span className="font-semibold text-gold">{completionPct}%</span>
+                </div>
+                <Progress value={completionPct} />
               </div>
-              <Progress value={completionPct} />
             </div>
           </div>
 

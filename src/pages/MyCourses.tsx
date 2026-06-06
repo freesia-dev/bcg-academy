@@ -5,9 +5,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GraduationCap, PlayCircle, Loader2, Clock } from "lucide-react";
+import { GraduationCap, PlayCircle, Loader2, Clock, Award } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyEnrollments } from "@/hooks/useEnrollments";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const statusLabel: Record<string, string> = {
   pending_payment: "Menunggu Verifikasi",
@@ -37,7 +39,16 @@ const MyCourses = () => {
         <h3 className="font-bold text-primary line-clamp-2">{e.course?.title}</h3>
         {e.course?.duration && <p className="text-xs text-muted-foreground flex items-center gap-1"><Clock size={12} />{e.course.duration}</p>}
         {e.status === "active" || e.status === "completed" ? (
-          <Button variant="gold" className="w-full" onClick={() => navigate(`/learn/${e.course.slug}`)}><PlayCircle size={16} className="mr-2" />Mulai Belajar</Button>
+          <div className="space-y-2">
+            <Button variant="gold" className="w-full" onClick={() => navigate(`/learn/${e.course.slug}`)}><PlayCircle size={16} className="mr-2" />{e.status === "completed" ? "Lihat Materi" : "Mulai Belajar"}</Button>
+            {e.certificate_url && (
+              <Button variant="outline" className="w-full" onClick={async () => {
+                const { data, error } = await supabase.storage.from("certificates").createSignedUrl(e.certificate_url!, 60 * 60);
+                if (error || !data?.signedUrl) { toast.error("Gagal membuka sertifikat"); return; }
+                window.open(data.signedUrl, "_blank");
+              }}><Award size={16} className="mr-2" />Unduh Sertifikat</Button>
+            )}
+          </div>
         ) : e.status === "pending_payment" ? (
           <p className="text-xs text-muted-foreground text-center py-2">Admin sedang memverifikasi pembayaran Anda.</p>
         ) : (
