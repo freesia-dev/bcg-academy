@@ -13,6 +13,7 @@ import { LogOut, Loader2, Plus, Trash2, Pencil, X, ArrowLeft } from "lucide-reac
 import { usePrograms, type Program } from "@/hooks/usePrograms";
 import PaymentsAdmin from "@/components/admin/PaymentsAdmin";
 import CertificatesAdmin from "@/components/admin/CertificatesAdmin";
+import CoursesAdmin from "@/components/admin/CoursesAdmin";
 
 interface GalleryItem { id: string; title: string; description: string | null; category: string; image_url: string; sort_order: number; }
 
@@ -152,13 +153,19 @@ const Admin = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="programs">
-          <TabsList>
+        <Tabs defaultValue="courses">
+          <TabsList className="flex-wrap h-auto">
+            <TabsTrigger value="courses">Kursus (LMS)</TabsTrigger>
             <TabsTrigger value="programs">Program Pelatihan</TabsTrigger>
             <TabsTrigger value="gallery">Galeri</TabsTrigger>
             <TabsTrigger value="payments">Pembayaran</TabsTrigger>
             <TabsTrigger value="certificates">Sertifikat</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="courses" className="mt-6">
+            <h2 className="text-2xl font-bold mb-4">Course Builder</h2>
+            <CoursesAdmin />
+          </TabsContent>
 
           <TabsContent value="programs" className="space-y-4 mt-6">
             <div className="flex justify-between items-center">
