@@ -17,6 +17,7 @@ import CoursesAdmin from "@/components/admin/CoursesAdmin";
 import SiteContentAdmin from "@/components/admin/SiteContentAdmin";
 import ParticipantsAdmin from "@/components/admin/ParticipantsAdmin";
 import ReportsAdmin from "@/components/admin/ReportsAdmin";
+import RolesAdmin from "@/components/admin/RolesAdmin";
 
 interface GalleryItem { id: string; title: string; description: string | null; category: string; image_url: string; sort_order: number; }
 
@@ -30,6 +31,7 @@ const Admin = () => {
   const { toast } = useToast();
   const [checking, setChecking] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
   const [userEmail, setUserEmail] = useState<string>("");
   const { programs, refetch } = usePrograms(false);
   const [editingProgram, setEditingProgram] = useState<Partial<Program> | null>(null);
@@ -51,8 +53,11 @@ const Admin = () => {
       if (!session) { navigate("/auth"); return; }
       setUserEmail(session.user.email || "");
       const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", session.user.id);
-      const admin = (roles || []).some((r: any) => r.role === "admin");
+      const roleList = (roles || []).map((r: any) => r.role);
+      const superadmin = roleList.includes("superadmin");
+      const admin = superadmin || roleList.includes("admin");
       setIsAdmin(admin);
+      setIsSuperadmin(superadmin);
       setChecking(false);
       if (admin) loadGallery();
     };
@@ -166,7 +171,16 @@ const Admin = () => {
             <TabsTrigger value="cms">CMS Beranda</TabsTrigger>
             <TabsTrigger value="programs">Program</TabsTrigger>
             <TabsTrigger value="gallery">Galeri</TabsTrigger>
+            {isSuperadmin && <TabsTrigger value="roles">Role User</TabsTrigger>}
           </TabsList>
+
+          {isSuperadmin && (
+            <TabsContent value="roles" className="mt-6">
+              <h2 className="text-2xl font-bold mb-1">Kelola Role Pengguna</h2>
+              <p className="text-sm text-muted-foreground mb-4">Hanya superadmin yang bisa mengubah role pengguna.</p>
+              <RolesAdmin />
+            </TabsContent>
+          )}
 
           <TabsContent value="courses" className="mt-6">
             <h2 className="text-2xl font-bold mb-4">Course Builder</h2>
