@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Save } from "lucide-react";
 import { invalidateSiteContent } from "@/hooks/useSiteContent";
+import SiteContentPreview from "./SiteContentPreview";
+import { Eye } from "lucide-react";
 
 type ContentMap = Record<string, any>;
 
@@ -120,17 +122,29 @@ const SiteContentAdmin = () => {
         const fields = Object.keys(FIELD_LABELS[k] || {});
         return (
           <TabsContent value={k} key={k} className="mt-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="capitalize">{k === "payment_info" ? "Info Pembayaran" : k}</CardTitle>
-                <Button variant="gold" size="sm" onClick={() => save(k)} disabled={saving === k}>
-                  {saving === k ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}Simpan
-                </Button>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {fields.map((f) => renderField(k, f))}
-              </CardContent>
-            </Card>
+            <div className="grid lg:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="capitalize">{k === "payment_info" ? "Info Pembayaran" : k}</CardTitle>
+                  <Button variant="gold" size="sm" onClick={() => save(k)} disabled={saving === k}>
+                    {saving === k ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}Simpan
+                  </Button>
+                </CardHeader>
+                <CardContent className="space-y-3 max-h-[70vh] overflow-y-auto">
+                  {fields.map((f) => renderField(k, f))}
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm flex items-center gap-2 text-muted-foreground">
+                    <Eye className="h-4 w-4" /> Preview Langsung
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="max-h-[70vh] overflow-y-auto">
+                  <SiteContentPreview contentKey={k} value={data[k]} />
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         );
       })}
