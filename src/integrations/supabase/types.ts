@@ -562,7 +562,26 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      quiz_public: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          module_id: string
+          passing_score: number
+          questions: Json
+          title: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_attempts_quiz_id_fkey"
+            columns: ["id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       has_active_enrollment: {

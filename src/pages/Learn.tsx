@@ -122,15 +122,7 @@ const Learn = () => {
         return;
       }
 
-      const [{ data: mods }, { data: lessons }, { data: quizzes }] = await Promise.all([
-        supabase.from("modules").select("*").eq("course_id", c.id).order("sort_order"),
-        supabase
-          .from("lessons")
-          .select("*")
-          .in("module_id", []) // placeholder, replaced below
-          .order("sort_order"),
-        supabase.from("quizzes").select("*"),
-      ]);
+      const { data: mods } = await supabase.from("modules").select("*").eq("course_id", c.id).order("sort_order");
 
       const modIds = (mods || []).map((m: any) => m.id);
       const { data: realLessons } = await supabase
@@ -138,8 +130,10 @@ const Learn = () => {
         .select("*")
         .in("module_id", modIds.length ? modIds : ["00000000-0000-0000-0000-000000000000"])
         .order("sort_order");
+      // quiz_public strips the correct-answer key server-side before it ever
+      // reaches the browser — students only ever see question text + options.
       const { data: realQuizzes } = await supabase
-        .from("quizzes")
+        .from("quiz_public")
         .select("*")
         .in("module_id", modIds.length ? modIds : ["00000000-0000-0000-0000-000000000000"]);
 
@@ -465,21 +459,17 @@ const QuizView = ({
   const submit = async () => {
     if (questions.length === 0) return;
     setSubmitting(true);
-    let correct = 0;
-    questions.forEach((q, i) => {
-      if (answers[i] === q.correct) correct += 1;
-    });
-    const score = Math.round((correct / questions.length) * 100);
-    const passed = score >= (quiz.passing_score ?? 70);
-    const { error } = await supabase.from("quiz_attempts").insert({
-      user_id: userId,
-      quiz_id: quiz.id,
-      score,
-      passed,
-      answers,
+    // Scoring happens server-side in the submit-quiz edge function — the
+    // correct answers are never sent to or trusted from the browser.
+    const { data, error } = await supabase.functions.invoke("submit-quiz", {
+      body: { quiz_id: quiz.id, answers },
     });
     setSubmitting(false);
-    if (error) { toast.error("Gagal menyimpan kuis"); return; }
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "Gagal menyimpan kuis");
+      return;
+    }
+    const { score, passed } = data as { score: number; passed: boolean };
     setResult({ score, passed });
     onSubmitted({ score, passed });
     toast[passed ? "success" : "error"](passed ? `Lulus! Skor ${score}` : `Belum lulus. Skor ${score}`);

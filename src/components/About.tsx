@@ -71,7 +71,7 @@ const About = () => {
 
               <div className="pt-4">
                 <Button variant="gold" size="lg" className="mr-4" onClick={() => window.open("https://wa.me/6282254187096", "_blank")}>Hubungi Kami</Button>
-                <Button variant="outline" size="lg" onClick={() => window.open("https://wa.me/6282254187096", "_blank")}>Download Brosur</Button>
+                <Button variant="outline" size="lg" onClick={() => window.open("https://wa.me/6282254187096", "_blank")}>Minta Brosur via WhatsApp</Button>
               </div>
             </div>
           </div>

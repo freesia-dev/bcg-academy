@@ -167,32 +167,6 @@ const Gallery = () => {
           ))}
         </div>
 
-        {/* Load More */}
-        <div className="text-center mt-12">
-          <Button variant="corporate" size="lg">
-            Lihat Lebih Banyak
-          </Button>
-        </div>
-
-        {/* Bottom Stats */}
-        <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          <div>
-            <div className="text-3xl font-bold text-gold mb-2">500+</div>
-            <div className="text-sm text-muted-foreground">Foto Kegiatan</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-corporate-blue mb-2">50+</div>
-            <div className="text-sm text-muted-foreground">Video Pembelajaran</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-accent-red mb-2">25+</div>
-            <div className="text-sm text-muted-foreground">Testimoni Alumni</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-gold mb-2">100+</div>
-            <div className="text-sm text-muted-foreground">Momen Wisuda</div>
-          </div>
-        </div>
       </div>
     </section>
   );
