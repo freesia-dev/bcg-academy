@@ -1,73 +1,43 @@
-# Welcome to your Lovable project
+# BCG Academy
 
-## Project info
+System Layer Context
+You are a Senior Front & Back End Developer and Conversion Optimization Specialist with expertise in Professional and Marketing UI/UX. Help me create website for LPK Borneo Citra Gemilang (Logo Attached)
 
-**URL**: https://lovable.dev/projects/3694df21-6eaf-46d7-8784-da79eb2f9b96
+Domain Layer Context
+Application Overview Name: LPK Borneo Citra Gemilang Landing Page
+Type : Dynamic Landing Page
+Purpose : High-converting Multi-page website for LPK Borneo Citra Gemilang (Academy Purposes) with LMS ready setup. with list of training that user can choose (below)
+List of Training : 1. Administrasi Perkantoran, 2. Barista, 3. Rias Pengantin Gaun Panjang 4. Desainer Grafis, 5. Operator Komputer, 6. Digital Marketing.
 
-## How can I edit this code?
+Section Required:
+- Dashboard
+- Training Package with LMS Ready
+- About Us (LPK Borneo Citra Gemilang adalah lembaga pelatihan kerja yang berkomitmen mencetak sumber daya manusia unggul, berkompeten, dan siap bersaing di dunia kerja. Berlokasi di Kota Bontang, kami menghadirkan program pelatihan yang dirancang sesuai kebutuhan industri, mulai dari bidang kesekretariatan, administrasi perkantoran, teknologi informasi, hingga keterampilan kerja praktis lainnya. Dengan mengedepankan kurikulum berbasis SKKNI (Standar Kompetensi Kerja Nasional Indonesia) dan didukung oleh tenaga pengajar profesional, LPK Borneo Citra Gemilang bertekad memberikan pengalaman belajar yang aplikatif, berkualitas, dan relevan dengan perkembangan zaman. Kami percaya bahwa pendidikan dan keterampilan adalah kunci untuk membuka peluang yang lebih luas. Oleh karena itu, LPK Borneo Citra Gemilang hadir sebagai mitra terbaik bagi masyarakat yang ingin meningkatkan kemampuan, mengembangkan karier, maupun membangun masa depan yang lebih gemilang.)
+- Gallery
+- Contact us
 
-There are several ways of editing your application.
+Behavior Layer Context
+Visual Theme : Professional Black-Gold pallete, red and blue accent, clean modern layout typography: good font friendly, smooth animation, hover effect, mobile optimized touch targets
 
-**Use Lovable**
+This project was built with [Lovable](https://lovable.dev).
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/3694df21-6eaf-46d7-8784-da79eb2f9b96) and start prompting.
+**Live app**: https://bcg-academy.lovable.app
 
-Changes made via Lovable will be committed automatically to this repo.
+## Build with Lovable
 
-**Use your preferred IDE**
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/3694df21-6eaf-46d7-8784-da79eb2f9b96).
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **Ship faster**: describe what you want to build and Lovable handles the code.
+- **Stay in sync**: every change made in Lovable is committed straight to this repository.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Development
 
-Follow these steps:
+Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
+git clone <this-repository-url>
+cd <repository-name>
 npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/3694df21-6eaf-46d7-8784-da79eb2f9b96) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
