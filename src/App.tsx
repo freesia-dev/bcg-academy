@@ -12,6 +12,8 @@ import ContactPage from "./pages/ContactPage";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
+import SiteConfigAdmin from "./pages/SiteConfigAdmin";
+import { SiteConfigProvider } from "./hooks/useSiteConfig";
 import CoursesPage from "./pages/CoursesPage";
 import CourseDetail from "./pages/CourseDetail";
 import MyCourses from "./pages/MyCourses";
@@ -27,6 +29,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <SiteConfigProvider>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/registration" element={<Registration />} />
@@ -37,12 +40,14 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/konfigurasi" element={<SiteConfigAdmin />} />
           <Route path="/kursus" element={<CoursesPage />} />
           <Route path="/kursus/:slug" element={<CourseDetail />} />
           <Route path="/kursus-saya" element={<ProtectedRoute><MyCourses /></ProtectedRoute>} />
           <Route path="/learn/:slug" element={<ProtectedRoute><Learn /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+      </SiteConfigProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

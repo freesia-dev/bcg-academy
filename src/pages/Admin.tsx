@@ -168,10 +168,11 @@ const Admin = () => {
             <TabsTrigger value="payments">Pembayaran</TabsTrigger>
             <TabsTrigger value="reports">Laporan</TabsTrigger>
             <TabsTrigger value="certificates">Sertifikat</TabsTrigger>
-            <TabsTrigger value="cms">CMS Beranda</TabsTrigger>
+            <TabsTrigger value="cms">Rekening</TabsTrigger>
             <TabsTrigger value="programs">Program</TabsTrigger>
             <TabsTrigger value="gallery">Galeri</TabsTrigger>
             {isSuperadmin && <TabsTrigger value="roles">Role User</TabsTrigger>}
+            {isSuperadmin && <Link to="/admin/konfigurasi" className="inline-flex items-center rounded-sm px-3 py-1.5 text-sm font-medium text-gold-dark hover:bg-muted">⚙ Konfigurasi Situs</Link>}
           </TabsList>
 
           {isSuperadmin && (
@@ -198,7 +199,7 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="cms" className="mt-6">
-            <h2 className="text-2xl font-bold mb-4">CMS Beranda</h2>
+            <h2 className="text-2xl font-bold mb-4">Rekening Pembayaran</h2>
             <SiteContentAdmin />
           </TabsContent>
 

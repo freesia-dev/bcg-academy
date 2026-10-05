@@ -14,7 +14,7 @@ import { Eye } from "lucide-react";
 
 type ContentMap = Record<string, any>;
 
-const KEYS = ["hero", "about", "contact", "payment_info"] as const;
+const KEYS = ["payment_info"] as const;
 
 const PAYMENT_DEFAULT = {
   bank_name: "BCA - LPK BORNEO CITRA GEMILANG",
@@ -114,9 +114,9 @@ const SiteContentAdmin = () => {
   };
 
   return (
-    <Tabs defaultValue="hero">
+    <Tabs defaultValue="payment_info">
       <TabsList className="flex-wrap h-auto">
-        {KEYS.map((k) => <TabsTrigger key={k} value={k}>{k === "payment_info" ? "Pembayaran" : k.charAt(0).toUpperCase() + k.slice(1)}</TabsTrigger>)}
+        {KEYS.map((k) => <TabsTrigger key={k} value={k}>Rekening Pembayaran</TabsTrigger>)}
       </TabsList>
       {KEYS.map((k) => {
         const fields = Object.keys(FIELD_LABELS[k] || {});
@@ -125,7 +125,7 @@ const SiteContentAdmin = () => {
             <div className="grid lg:grid-cols-2 gap-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="capitalize">{k === "payment_info" ? "Info Pembayaran" : k}</CardTitle>
+                  <CardTitle className="capitalize">Info Pembayaran</CardTitle>
                   <Button variant="gold" size="sm" onClick={() => save(k)} disabled={saving === k}>
                     {saving === k ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}Simpan
                   </Button>

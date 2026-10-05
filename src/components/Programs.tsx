@@ -6,11 +6,14 @@ import { Clock, Users, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import ProgramRegistrationDialog from "./ProgramRegistrationDialog";
 import { usePrograms } from "@/hooks/usePrograms";
+import { useSiteConfig } from "@/hooks/useSiteConfig";
 
 const Programs = () => {
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { programs } = usePrograms();
+  const { brand, sections } = useSiteConfig();
+  const c = sections.programs;
 
   const handleProgramRegister = (programTitle: string) => {
     setSelectedProgram(programTitle);
@@ -18,16 +21,13 @@ const Programs = () => {
   };
 
   return (
-    <section id="programs" className="py-20 bg-secondary/30">
+    <section id="programs" className="py-20 md:py-24 bg-secondary/40">
       <div className="container mx-auto px-4">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-4xl font-bold text-primary mb-4">
-            Program Pelatihan <span className="text-gradient">Unggulan</span>
+        <div className="text-center max-w-2xl mx-auto mb-14">
+          <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">
+            {c.title} <span className="text-gradient">{c.titleHighlight}</span>
           </h2>
-          <p className="text-lg text-muted-foreground">
-            Pilih program pelatihan yang sesuai dengan minat dan tujuan karir Anda.
-            Semua program dilengkapi dengan sertifikat BNSP dan pendampingan penempatan kerja.
-          </p>
+          <p className="text-lg text-muted-foreground">{c.subtitle}</p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -35,10 +35,9 @@ const Programs = () => {
             <Card key={program.id} className="group hover:shadow-strong transition-all duration-300 hover:-translate-y-2 border-0 bg-card/80 backdrop-blur-sm flex flex-col h-full">
               <CardHeader className="space-y-4">
                 <div className="flex items-start justify-between">
-                  <Badge variant="secondary" className={`bg-${program.color}/10 text-${program.color} border-${program.color}/20`}>
+                  <Badge variant="secondary" className="bg-gold/10 text-gold-dark border-gold/20">
                     {program.level}
                   </Badge>
-                  <div className={`w-3 h-3 rounded-full bg-${program.color}`}></div>
                 </div>
                 <CardTitle className="text-xl font-bold group-hover:text-gold transition-colors min-h-[3.5rem]">
                   <Link to={`/program-pelatihan/${program.slug}`} className="hover:underline">{program.title}</Link>
@@ -74,11 +73,9 @@ const Programs = () => {
         </div>
 
         <div className="text-center mt-16">
-          <p className="text-muted-foreground mb-6">
-            Tidak menemukan program yang sesuai? Hubungi kami untuk konsultasi gratis!
-          </p>
-          <Button variant="corporate" size="lg" onClick={() => window.open('https://wa.me/6282254187096', '_blank')}>
-            Konsultasi Program
+          <p className="text-muted-foreground mb-6">{c.ctaText}</p>
+          <Button variant="corporate" size="lg" onClick={() => window.open(`https://wa.me/${brand.whatsapp}`, '_blank')}>
+            {c.ctaButton}
           </Button>
         </div>
       </div>

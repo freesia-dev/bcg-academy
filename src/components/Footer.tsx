@@ -1,120 +1,97 @@
 import { Button } from "@/components/ui/button";
-import { Phone, Mail, MapPin, MessageCircle } from "lucide-react";
+import { Phone, Mail, MapPin, MessageCircle, Instagram, Facebook, Youtube } from "lucide-react";
 import { Link } from "react-router-dom";
-import logoImage from "@/assets/logo-bcg.png";
+import { useSiteConfig } from "@/hooks/useSiteConfig";
+import { usePrograms } from "@/hooks/usePrograms";
 
 const Footer = () => {
-  const programs = [
-    "Administrasi Perkantoran",
-    "Barista Professional",
-    "Rias Pengantin Gaun Panjang",
-    "Desainer Grafis",
-    "Operator Komputer",
-    "Digital Marketing"
-  ];
+  const { brand } = useSiteConfig();
+  const { programs } = usePrograms();
 
   const quickLinks = [
     { name: "Tentang Kami", to: "/tentang-kami" },
     { name: "Program Pelatihan", to: "/kursus" },
     { name: "Galeri", to: "/#gallery" },
     { name: "Kontak", to: "/kontak" },
+    { name: "Masuk / Daftar", to: "/auth" },
   ];
+  const socials = [
+    { url: brand.instagram, icon: Instagram, label: "Instagram" },
+    { url: brand.facebook, icon: Facebook, label: "Facebook" },
+    { url: brand.youtube, icon: Youtube, label: "YouTube" },
+    { url: brand.tiktok, icon: null, label: "TikTok" },
+  ].filter((s) => s.url);
 
   return (
     <footer className="bg-primary text-primary-foreground">
-      {/* Main Footer */}
       <div className="container mx-auto px-4 py-16">
-        <div className="grid lg:grid-cols-4 gap-12">
-          {/* Company Info */}
-          <div className="lg:col-span-1 space-y-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12">
+          <div className="space-y-5">
             <div className="flex items-center gap-3">
-              <img src={logoImage} alt="LPK Borneo Citra Gemilang" className="h-12 w-auto" />
+              <div className="w-12 h-12 rounded-lg bg-primary-foreground/95 p-1.5 flex items-center justify-center shrink-0">
+                <img src={brand.logo} alt={brand.name} className="max-h-full max-w-full object-contain" />
+              </div>
               <div>
-                <h3 className="text-lg font-bold">LPK Borneo Citra Gemilang</h3>
-                <p className="text-xs text-primary-foreground/70">Lembaga Pelatihan Kerja</p>
+                <p className="text-lg font-bold leading-tight" style={{ fontFamily: "var(--font-heading)" }}>{brand.name}</p>
+                <p className="text-xs text-primary-foreground/65">{brand.tagline}</p>
               </div>
             </div>
-            
-            <p className="text-primary-foreground/80 text-sm leading-relaxed">
-              Lembaga pelatihan kerja terpercaya di Bontang yang berkomitmen mencetak SDM unggul 
-              dan berkompeten sesuai standar industri.
+            <p className="text-primary-foreground/75 text-sm leading-relaxed">
+              Pelatihan berbasis kompetensi di Bontang, membekali peserta dengan keterampilan siap kerja dan siap berwirausaha.
             </p>
-
-            {/* Contact Info */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <Phone size={16} className="text-gold" />
-                <span className="text-sm">+62 822 5418 7096</span>
+            {socials.length > 0 && (
+              <div className="flex gap-2">
+                {socials.map((s) => (
+                  <a key={s.label} href={s.url} target="_blank" rel="noreferrer" aria-label={s.label}
+                    className="w-9 h-9 rounded-full bg-primary-foreground/10 hover:bg-gold hover:text-primary flex items-center justify-center text-xs font-bold transition-colors">
+                    {s.icon ? <s.icon size={16} /> : "TT"}
+                  </a>
+                ))}
               </div>
-              <div className="flex items-center gap-3">
-                <Mail size={16} className="text-gold" />
-                <span className="text-sm">lpk.borneocg@gmail.com</span>
-              </div>
-              <div className="flex items-start gap-3">
-                <MapPin size={16} className="text-gold mt-0.5" />
-                <span className="text-sm">Jl. Dewi Sartika Gg. Kulintang 4 No. 21<br />Kel. Bontang Baru, Kec. Bontang Utara<br />Kota Bontang 75311</span>
-              </div>
-              <p className="text-xs text-primary-foreground/60 pt-2">NIB: 3001250056199</p>
-            </div>
+            )}
           </div>
 
-          {/* Programs */}
-          <div className="space-y-6">
-            <h4 className="text-lg font-semibold text-gold">Program Pelatihan</h4>
-            <ul className="space-y-3">
-              {programs.map((program, index) => (
-                <li key={index}>
-                  <Link
-                    to="/kursus"
-                    className="text-sm text-primary-foreground/80 hover:text-gold transition-colors duration-300"
-                  >
-                    {program}
-                  </Link>
+          <div className="space-y-5">
+            <h4 className="text-base font-semibold text-gold">Program Pelatihan</h4>
+            <ul className="space-y-2.5">
+              {programs.map((p) => (
+                <li key={p.id}>
+                  <Link to={`/program-pelatihan/${p.slug}`} className="text-sm text-primary-foreground/75 hover:text-gold transition-colors">{p.title}</Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Quick Links */}
-          <div className="space-y-6">
-            <h4 className="text-lg font-semibold text-gold">Tautan Cepat</h4>
-            <ul className="space-y-3">
-              {quickLinks.map((link, index) => (
-                <li key={index}>
-                  <Link
-                    to={link.to}
-                    className="text-sm text-primary-foreground/80 hover:text-gold transition-colors duration-300"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
+          <div className="space-y-5">
+            <h4 className="text-base font-semibold text-gold">Tautan Cepat</h4>
+            <ul className="space-y-2.5">
+              {quickLinks.map((l) => (
+                <li key={l.name}><Link to={l.to} className="text-sm text-primary-foreground/75 hover:text-gold transition-colors">{l.name}</Link></li>
               ))}
             </ul>
           </div>
 
-          {/* Contact CTA */}
-          <div className="space-y-6">
-            <h4 className="text-lg font-semibold text-gold">Tetap Terhubung</h4>
-            <p className="text-sm text-primary-foreground/80">
-              Ada pertanyaan tentang program pelatihan? Chat langsung dengan tim kami.
-            </p>
-            <Button
-              variant="gold"
-              className="w-full justify-center"
-              onClick={() => window.open("https://wa.me/6282254187096", "_blank")}
-            >
+          <div className="space-y-5">
+            <h4 className="text-base font-semibold text-gold">Kontak</h4>
+            <ul className="space-y-3 text-sm text-primary-foreground/80">
+              <li className="flex items-start gap-3"><MapPin size={16} className="text-gold mt-0.5 shrink-0" /><span>{brand.address}<br />{brand.city}</span></li>
+              <li className="flex items-center gap-3"><Phone size={16} className="text-gold shrink-0" />{brand.phoneDisplay}</li>
+              <li className="flex items-center gap-3"><Mail size={16} className="text-gold shrink-0" />{brand.email}</li>
+            </ul>
+            <Button variant="gold" className="w-full" onClick={() => window.open(`https://wa.me/${brand.whatsapp}`, "_blank")}>
               <MessageCircle size={16} className="mr-2" />Chat WhatsApp
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Bottom Footer */}
-      <div className="border-t border-primary-foreground/20">
-        <div className="container mx-auto px-4 py-6">
-          <div className="text-sm text-primary-foreground/70 text-center md:text-left">
-            © 2025 LPK Borneo Citra Gemilang. Semua hak dilindungi undang-undang.
-          </div>
+      <div className="border-t border-primary-foreground/15">
+        <div className="container mx-auto px-4 py-6 flex flex-col md:flex-row gap-2 md:justify-between text-xs text-primary-foreground/60 text-center md:text-left">
+          <span>© {new Date().getFullYear()} {brand.name}. Semua hak dilindungi.</span>
+          <span>
+            {brand.nib && <>NIB {brand.nib}</>}
+            {brand.legalAddress && <> • Alamat terdaftar: {brand.legalAddress}</>}
+          </span>
         </div>
       </div>
     </footer>

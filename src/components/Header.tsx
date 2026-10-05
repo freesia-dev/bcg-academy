@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Phone, Mail, ChevronDown, User as UserIcon, LogOut, BookOpen, LayoutDashboard } from "lucide-react";
+import { Menu, X, Phone, Mail, ChevronDown, User as UserIcon, LogOut, BookOpen, LayoutDashboard, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import logoImage from "@/assets/logo-bcg.png";
+import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -18,7 +18,8 @@ const Header = () => {
   const [programs, setPrograms] = useState<ProgramLink[]>([]);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isSuperadmin } = useAuth();
+  const { brand } = useSiteConfig();
 
   useEffect(() => {
     supabase
@@ -46,17 +47,17 @@ const Header = () => {
       <div className="container mx-auto px-4">
         <div className="hidden lg:flex items-center justify-end py-2 text-sm text-muted-foreground border-b border-border/50">
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2"><Phone size={14} /><span>+62 822 5418 7096</span></div>
-            <div className="flex items-center gap-2"><Mail size={14} /><span>lpk.borneocg@gmail.com</span></div>
+            <div className="flex items-center gap-2"><Phone size={14} /><span>{brand.phoneDisplay}</span></div>
+            <div className="flex items-center gap-2"><Mail size={14} /><span>{brand.email}</span></div>
           </div>
         </div>
 
         <div className="flex items-center justify-between py-4">
           <Link to="/" className="flex items-center gap-3">
-            <img src={logoImage} alt="LPK Borneo Citra Gemilang" className="h-12 w-auto" />
+            <img src={brand.logo} alt={brand.name} className="h-12 w-auto" />
             <div className="hidden sm:block">
-              <h1 className="text-lg font-bold text-primary">LPK Borneo Citra Gemilang</h1>
-              <p className="text-xs text-muted-foreground">Lembaga Pelatihan Kerja</p>
+              <p className="text-lg font-bold text-primary leading-tight" style={{ fontFamily: "var(--font-heading)" }}>{brand.name}</p>
+              <p className="text-xs text-muted-foreground">{brand.tagline}</p>
             </div>
           </Link>
 
@@ -108,6 +109,7 @@ const Header = () => {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => navigate("/kursus-saya")}><BookOpen className="mr-2 h-4 w-4" />Kursus Saya</DropdownMenuItem>
                   {isAdmin && <DropdownMenuItem onClick={() => navigate("/admin")}><LayoutDashboard className="mr-2 h-4 w-4" />Dashboard Admin</DropdownMenuItem>}
+                  {isSuperadmin && <DropdownMenuItem onClick={() => navigate("/admin/konfigurasi")}><Settings className="mr-2 h-4 w-4" />Konfigurasi Situs</DropdownMenuItem>}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}><LogOut className="mr-2 h-4 w-4" />Keluar</DropdownMenuItem>
                 </DropdownMenuContent>
