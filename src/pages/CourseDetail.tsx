@@ -35,9 +35,7 @@ const CourseDetail = () => {
   const handleEnrollFree = async () => {
     if (!user) return navigate(`/auth?redirect=/kursus/${slug}`);
     setEnrolling(true);
-    const { error } = await supabase.from("enrollments").insert({
-      user_id: user.id, course_id: course.id, status: "active", payment_amount: 0,
-    });
+    const { error } = await (supabase as any).rpc("enroll_in_course", { _course_id: course.id });
     setEnrolling(false);
     if (error) return toast({ title: "Gagal mendaftar", description: error.message, variant: "destructive" });
     toast({ title: "Berhasil mendaftar!", description: "Anda bisa langsung mulai belajar." });
@@ -47,8 +45,21 @@ const CourseDetail = () => {
   const renderActionButton = () => {
     if (!user) return <Button variant="gold" size="lg" className="w-full" onClick={() => navigate(`/auth?redirect=/kursus/${slug}`)}>Masuk untuk Daftar</Button>;
     if (isActive) return <Button variant="gold" size="lg" className="w-full" onClick={() => navigate(`/learn/${slug}`)}><PlayCircle className="mr-2" />Mulai Belajar</Button>;
-    if (isPending) return <Button disabled size="lg" className="w-full"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Menunggu Verifikasi Admin</Button>;
-    if (enrollment?.status === "rejected") return <Button variant="destructive" size="lg" className="w-full" disabled>Pembayaran Ditolak — Hubungi Admin</Button>;
+    if (isPending) return (
+      <div className="space-y-2">
+        <Button disabled size="lg" className="w-full"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Menunggu Verifikasi Admin</Button>
+        <Button variant="outline" className="w-full" onClick={() => navigate("/kursus-saya")}>Lihat Status di Kursus Saya</Button>
+      </div>
+    );
+    if (enrollment?.status === "rejected") return (
+      <div className="space-y-2">
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
+          <p className="font-semibold text-destructive">Pembayaran belum dapat diverifikasi</p>
+          {enrollment.notes && <p className="text-muted-foreground mt-1">Alasan: {enrollment.notes}</p>}
+        </div>
+        <Button variant="gold" size="lg" className="w-full" onClick={() => setCheckoutOpen(true)}>Kirim Ulang Bukti Pembayaran</Button>
+      </div>
+    );
     if (isFree) return <Button variant="gold" size="lg" className="w-full" onClick={handleEnrollFree} disabled={enrolling}>{enrolling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Daftar Sekarang (Gratis)</Button>;
     return <Button variant="gold" size="lg" className="w-full" onClick={() => setCheckoutOpen(true)}>Beli Kursus — {formatPrice(course.price, false)}</Button>;
   };
@@ -110,7 +121,7 @@ const CourseDetail = () => {
               <Card className="sticky top-32">
                 <CardContent className="p-6 space-y-4">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-gold mb-1">{formatPrice(course.price, isFree)}</div>
+                    <div className="text-3xl font-bold text-gold-dark mb-1">{formatPrice(course.price, isFree)}</div>
                     {!isFree && <p className="text-xs text-muted-foreground">Sekali bayar, akses selamanya</p>}
                   </div>
 
@@ -120,7 +131,7 @@ const CourseDetail = () => {
                     {course.duration && <div className="flex items-center gap-2"><Clock size={16} className="text-muted-foreground" />Durasi: {course.duration}</div>}
                     {course.capacity && <div className="flex items-center gap-2"><Users size={16} className="text-muted-foreground" />Kapasitas: {course.capacity}</div>}
                     {course.instructor_name && <div className="flex items-center gap-2"><GraduationCap size={16} className="text-muted-foreground" />Instruktur: {course.instructor_name}</div>}
-                    <div className="flex items-center gap-2"><CheckCircle2 size={16} className="text-gold" />Sertifikat BNSP</div>
+                    <div className="flex items-center gap-2"><CheckCircle2 size={16} className="text-gold" />Sertifikat kelulusan resmi</div>
                   </div>
                 </CardContent>
               </Card>

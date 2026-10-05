@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Building2, Zap } from "lucide-react";
+import { Loader2, Building2, Zap, Copy, Check, MessageCircle } from "lucide-react";
+import { useSiteConfig } from "@/hooks/useSiteConfig";
 
 interface Props {
   open: boolean;
@@ -36,7 +37,9 @@ const CheckoutDialog = ({ open, onOpenChange, course, userId, onSuccess }: Props
   const { toast } = useToast();
   const [paymentInfo, setPaymentInfo] = useState<any>(null);
   const [method, setMethod] = useState("Transfer Bank");
-  const [amount, setAmount] = useState(course.price);
+  const [copied, setCopied] = useState(false);
+  const { brand } = useSiteConfig();
+  const amount = course.price;
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [midtransLoading, setMidtransLoading] = useState(false);
@@ -47,7 +50,7 @@ const CheckoutDialog = ({ open, onOpenChange, course, userId, onSuccess }: Props
     if (!open) return;
     supabase.from("site_content").select("value").eq("key", "payment_info").maybeSingle()
       .then(({ data }) => setPaymentInfo(data?.value || null));
-    setAmount(course.price);
+    setFile(null);
   }, [open, course.price]);
 
   const handleMidtrans = async () => {
@@ -84,15 +87,14 @@ const CheckoutDialog = ({ open, onOpenChange, course, userId, onSuccess }: Props
     const { error: upErr } = await supabase.storage.from("payment-proofs").upload(path, file);
     if (upErr) { setSubmitting(false); return toast({ title: "Gagal upload bukti", description: upErr.message, variant: "destructive" }); }
 
-    const { error: insErr } = await supabase.from("enrollments").insert({
-      user_id: userId, course_id: course.id, status: "pending_payment",
-      payment_method: method, payment_proof_url: path, payment_amount: amount, paid_at: new Date().toISOString(),
+    const { error: insErr } = await (supabase as any).rpc("enroll_in_course", {
+      _course_id: course.id, _method: method, _proof_path: path,
     });
     if (insErr) { setSubmitting(false); return toast({ title: "Gagal mendaftar", description: insErr.message, variant: "destructive" }); }
 
     supabase.functions.invoke("notify-payment", { body: { course_id: course.id, course_title: course.title, amount } }).catch(() => {});
     setSubmitting(false);
-    toast({ title: "Pembayaran terkirim", description: "Admin akan verifikasi maksimal 1×24 jam." });
+    toast({ title: "Bukti pembayaran terkirim", description: "Admin akan memverifikasi maksimal 1×24 jam. Status bisa dipantau di Kursus Saya." });
     onSuccess();
     onOpenChange(false);
   };
@@ -106,23 +108,37 @@ const CheckoutDialog = ({ open, onOpenChange, course, userId, onSuccess }: Props
         </DialogHeader>
 
         <div className="rounded-lg border bg-secondary/40 p-4 space-y-2 text-sm">
-          <div className="flex justify-between"><span className="text-muted-foreground">Total</span><span className="font-bold text-gold text-lg">{formatRp(course.price)}</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">Total</span><span className="font-bold text-gold-dark text-lg">{formatRp(course.price)}</span></div>
         </div>
 
-        <Button variant="gold" className="w-full" disabled={midtransLoading || course.price <= 0} onClick={handleMidtrans}>
-          {midtransLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Zap className="h-4 w-4 mr-2" />}
-          Bayar Otomatis (QRIS / VA / E-Wallet)
-        </Button>
+        {paymentInfo?.midtrans_enabled && (
+          <>
+            <Button variant="gold" className="w-full" disabled={midtransLoading || course.price <= 0} onClick={handleMidtrans}>
+              {midtransLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Zap className="h-4 w-4 mr-2" />}
+              Bayar Otomatis (QRIS / VA / E-Wallet)
+            </Button>
+            <div className="relative my-2">
+              <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+              <div className="relative flex justify-center text-xs"><span className="bg-background px-2 text-muted-foreground">atau transfer manual</span></div>
+            </div>
+          </>
+        )}
 
-        <div className="relative my-2">
-          <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
-          <div className="relative flex justify-center text-xs"><span className="bg-background px-2 text-muted-foreground">atau transfer manual</span></div>
-        </div>
+        <ol className="text-xs text-muted-foreground space-y-1 list-decimal pl-4">
+          <li>Transfer sesuai nominal ke rekening di bawah.</li>
+          <li>Unggah bukti transfer lalu kirim.</li>
+          <li>Admin memverifikasi (maks. 1×24 jam), kursus langsung terbuka.</li>
+        </ol>
 
         {paymentInfo && (
           <div className="rounded-lg border bg-secondary/40 p-4 space-y-1 text-sm">
             <div className="flex items-center gap-2 font-semibold"><Building2 size={14} />{paymentInfo.bank_name}</div>
-            <p className="font-mono text-base">{paymentInfo.account_number}</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-mono text-base">{paymentInfo.account_number}</p>
+              <Button type="button" size="sm" variant="ghost" className="h-7 px-2" onClick={() => { navigator.clipboard?.writeText(String(paymentInfo.account_number)); setCopied(true); setTimeout(() => setCopied(false), 1500); }}>
+                {copied ? <Check size={14} /> : <Copy size={14} />}
+              </Button>
+            </div>
             <p className="text-xs text-muted-foreground">a.n. {paymentInfo.account_holder}</p>
             {paymentInfo.instructions && <p className="text-xs text-muted-foreground pt-1">{paymentInfo.instructions}</p>}
           </div>
@@ -138,15 +154,15 @@ const CheckoutDialog = ({ open, onOpenChange, course, userId, onSuccess }: Props
             </select>
           </div>
           <div>
-            <Label>Nominal Transfer (Rp)</Label>
-            <Input type="number" required value={amount} onChange={(e) => setAmount(parseInt(e.target.value) || 0)} />
-          </div>
-          <div>
             <Label>Bukti Transfer (max 5MB)</Label>
             <Input type="file" accept="image/*,application/pdf" required onChange={(e) => setFile(e.target.files?.[0] || null)} />
           </div>
-          <Button type="submit" variant="outline" className="w-full" disabled={submitting}>
-            {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Kirim Bukti Transfer Manual
+          <Button type="submit" variant="gold" className="w-full" disabled={submitting}>
+            {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Kirim Bukti Transfer
+          </Button>
+          <Button type="button" variant="ghost" size="sm" className="w-full text-muted-foreground"
+            onClick={() => window.open(`https://wa.me/${brand.whatsapp}?text=${encodeURIComponent(`Halo, saya ingin konfirmasi pembayaran kursus "${course.title}" (${formatRp(amount)}).`)}`, "_blank")}>
+            <MessageCircle className="h-4 w-4 mr-2" />Ada kendala? Hubungi admin via WhatsApp
           </Button>
         </form>
       </DialogContent>

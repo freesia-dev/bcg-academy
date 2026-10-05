@@ -22,6 +22,7 @@ const stat: Field[] = [
 ];
 
 const titleFields: Field[] = [
+  { key: "eyebrow", label: "Label kecil di atas judul", type: "text" },
   { key: "title", label: "Judul", type: "text" },
   { key: "titleHighlight", label: "Judul (kata berwarna)", type: "text" },
 ];

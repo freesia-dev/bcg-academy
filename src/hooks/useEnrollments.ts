@@ -10,6 +10,7 @@ export interface Enrollment {
   payment_amount: number | null;
   completed_at: string | null;
   certificate_url: string | null;
+  notes: string | null;
 }
 
 export const useMyEnrollments = (userId: string | undefined) => {

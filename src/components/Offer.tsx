@@ -1,3 +1,4 @@
+import SectionHeader from "@/components/SectionHeader";
 import { GraduationCap, Award, Briefcase, Users, ShieldCheck, BookOpen } from "lucide-react";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 
@@ -8,12 +9,7 @@ const Offer = () => {
   return (
     <section id="offer" className="py-20 md:py-24">
       <div className="container mx-auto px-4">
-        <div className="text-center max-w-2xl mx-auto mb-14">
-          <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">
-            {c.title} <span className="text-gradient">{c.titleHighlight}</span>
-          </h2>
-          <p className="text-lg text-muted-foreground">{c.subtitle}</p>
-        </div>
+        <SectionHeader eyebrow={c.eyebrow} title={c.title} highlight={c.titleHighlight} subtitle={c.subtitle} />
 
         <div className="grid md:grid-cols-3 gap-6">
           {c.items.map((it, i) => {

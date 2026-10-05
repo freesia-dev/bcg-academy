@@ -55,16 +55,16 @@ export interface SiteConfig {
       subtitle: string; primaryCta: string; secondaryCta: string; image: string;
       highlights: string[]; stats: StatItem[];
     };
-    offer: { enabled: boolean; title: string; titleHighlight: string; subtitle: string; items: OfferItem[] };
-    programs: { enabled: boolean; title: string; titleHighlight: string; subtitle: string; ctaText: string; ctaButton: string };
+    offer: { enabled: boolean; eyebrow: string; title: string; titleHighlight: string; subtitle: string; items: OfferItem[] };
+    programs: { enabled: boolean; eyebrow: string; title: string; titleHighlight: string; subtitle: string; ctaText: string; ctaButton: string };
     about: {
-      enabled: boolean; title: string; titleHighlight: string; description: string;
+      enabled: boolean; eyebrow: string; title: string; titleHighlight: string; description: string;
       quote: string; quoteAuthor: string; featuresTitle: string; features: string[];
       vision: string; mission: string; stats: StatItem[]; closingQuote: string;
     };
-    team: { enabled: boolean; title: string; titleHighlight: string; subtitle: string; members: TeamMember[] };
-    gallery: { enabled: boolean; title: string; titleHighlight: string; subtitle: string };
-    contact: { enabled: boolean; title: string; titleHighlight: string; subtitle: string; formTitle: string; formNote: string };
+    team: { enabled: boolean; eyebrow: string; title: string; titleHighlight: string; subtitle: string; members: TeamMember[] };
+    gallery: { enabled: boolean; eyebrow: string; title: string; titleHighlight: string; subtitle: string };
+    contact: { enabled: boolean; eyebrow: string; title: string; titleHighlight: string; subtitle: string; formTitle: string; formNote: string };
   };
 }
 
@@ -95,7 +95,7 @@ export const DEFAULT_CONFIG: SiteConfig = {
     primary: "#09090b",
     accent: "#e7b623",
     secondary: "#052c6b",
-    headingFont: "Playfair Display",
+    headingFont: "Plus Jakarta Sans",
     bodyFont: "Inter",
     radius: 12,
   },
@@ -132,6 +132,7 @@ export const DEFAULT_CONFIG: SiteConfig = {
     },
     offer: {
       enabled: true,
+      eyebrow: "Keunggulan",
       title: "Mengapa",
       titleHighlight: "BCG Academy",
       subtitle:
@@ -156,6 +157,7 @@ export const DEFAULT_CONFIG: SiteConfig = {
     },
     programs: {
       enabled: true,
+      eyebrow: "Program",
       title: "Program Pelatihan",
       titleHighlight: "Unggulan",
       subtitle:
@@ -165,6 +167,7 @@ export const DEFAULT_CONFIG: SiteConfig = {
     },
     about: {
       enabled: true,
+      eyebrow: "Tentang Kami",
       title: "Tentang",
       titleHighlight: "BCG Academy",
       description:
@@ -195,6 +198,7 @@ export const DEFAULT_CONFIG: SiteConfig = {
     },
     team: {
       enabled: true,
+      eyebrow: "Tim Pengajar",
       title: "Instruktur",
       titleHighlight: "Kami",
       subtitle:
@@ -222,12 +226,14 @@ export const DEFAULT_CONFIG: SiteConfig = {
     },
     gallery: {
       enabled: true,
+      eyebrow: "Dokumentasi",
       title: "Galeri",
       titleHighlight: "Kegiatan",
       subtitle: "Dokumentasi kegiatan pelatihan, sertifikasi, dan kerja sama LPK Borneo Citra Gemilang.",
     },
     contact: {
       enabled: true,
+      eyebrow: "Kontak",
       title: "Hubungi",
       titleHighlight: "Kami",
       subtitle:
@@ -250,8 +256,8 @@ export const THEME_PRESETS: ThemePreset[] = [
   { id: "slate", label: "Slate Modern", primary: "#0f172a", accent: "#38bdf8", secondary: "#1e40af" },
 ];
 
-export const HEADING_FONTS = ["Playfair Display", "Poppins", "Montserrat", "Lora", "Merriweather", "Inter"];
-export const BODY_FONTS = ["Inter", "Poppins", "Nunito Sans", "Source Sans 3", "Open Sans"];
+export const HEADING_FONTS = ["Plus Jakarta Sans", "Sora", "Outfit", "Manrope", "Poppins", "Montserrat", "DM Serif Display", "Playfair Display", "Lora"];
+export const BODY_FONTS = ["Inter", "Plus Jakarta Sans", "Manrope", "DM Sans", "Nunito Sans", "Open Sans"];
 
 export function hexToHsl(hex: string): [number, number, number] {
   let h = hex.replace("#", "");

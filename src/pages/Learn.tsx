@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Circle, PlayCircle, FileText, FileQuestion, Lock, ArrowLeft, Award, Loader2 } from "lucide-react";
+import { CheckCircle2, Circle, PlayCircle, FileText, FileQuestion, Lock, ArrowLeft, ArrowRight, Award, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -168,8 +168,14 @@ const Learn = () => {
         setAttempts(map);
       }
 
-      // auto select first lesson
-      const first = combined.find((m) => m.lessons.length)?.lessons[0];
+      // lanjutkan dari pelajaran pertama yang belum selesai
+      const doneIds = new Set<string>();
+      if (lessonIds.length) {
+        const { data: prog2 } = await supabase.from("lesson_progress").select("lesson_id").eq("user_id", user.id).in("lesson_id", lessonIds);
+        (prog2 || []).forEach((p: any) => doneIds.add(p.lesson_id));
+      }
+      const flat = combined.flatMap((m) => m.lessons);
+      const first = flat.find((l) => !doneIds.has(l.id)) || flat[0];
       if (first) {
         setActiveId(first.id);
         setActiveKind("lesson");
@@ -200,19 +206,34 @@ const Learn = () => {
   }, [activeId, activeKind, allLessons, modules]);
 
   const markComplete = async (lessonId: string) => {
-    if (!user || progress.has(lessonId)) return;
+    if (!user || progress.has(lessonId)) return true;
     const { error } = await supabase
       .from("lesson_progress")
       .insert({ user_id: user.id, lesson_id: lessonId });
     if (error) {
       toast.error("Gagal menyimpan progress");
-      return;
+      return false;
     }
     setProgress((s) => new Set(s).add(lessonId));
     toast.success("Pelajaran selesai");
+    return true;
   };
 
   const allQuizzes = useMemo(() => modules.flatMap((m) => m.quizzes), [modules]);
+  const sequence = useMemo(
+    () => modules.flatMap((m) => [
+      ...m.lessons.map((l) => ({ kind: "lesson" as const, id: l.id })),
+      ...m.quizzes.map((q) => ({ kind: "quiz" as const, id: q.id })),
+    ]),
+    [modules],
+  );
+  const seqIndex = sequence.findIndex((x) => x.id === activeId);
+  const goTo = (i: number) => {
+    const t = sequence[i];
+    if (!t) return;
+    setActiveId(t.id); setActiveKind(t.kind);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   const allLessonsDone = allLessons.length > 0 && allLessons.every((l) => progress.has(l.id));
   const allQuizzesPassed = allQuizzes.every((q) => attempts[q.id]?.passed);
   const canClaim = (allLessons.length > 0 || allQuizzes.length > 0) && allLessonsDone && allQuizzesPassed;
@@ -323,9 +344,30 @@ const Learn = () => {
             </div>
           </div>
 
+          {canClaim && !certPath && (
+            <Card className="mb-6 border-gold/40 bg-gold/10">
+              <CardContent className="p-5 flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <Award className="h-8 w-8 text-gold" />
+                  <div>
+                    <p className="font-bold">Selamat! Seluruh materi dan kuis sudah selesai.</p>
+                    <p className="text-sm text-muted-foreground">Klaim sertifikat kelulusan Anda sekarang.</p>
+                  </div>
+                </div>
+                <Button variant="gold" onClick={claimCertificate} disabled={claiming}>
+                  {claiming ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Award className="h-4 w-4 mr-2" />}Klaim Sertifikat
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="grid lg:grid-cols-[1fr_340px] gap-6">
             <div className="space-y-4">
-              {active?.kind === "lesson" && <LessonView lesson={active.data} done={progress.has(active.data.id)} onComplete={() => markComplete(active.data.id)} />}
+              {active?.kind === "lesson" && <LessonView lesson={active.data} done={progress.has(active.data.id)}
+                onComplete={() => markComplete(active.data.id)}
+                hasPrev={seqIndex > 0} hasNext={seqIndex >= 0 && seqIndex < sequence.length - 1}
+                onPrev={() => goTo(seqIndex - 1)}
+                onNext={async () => { if (await markComplete(active.data.id)) goTo(seqIndex + 1); }} />}
               {active?.kind === "quiz" && <QuizView quiz={active.data} prev={attempts[active.data.id]} userId={user!.id} onSubmitted={(r) => setAttempts((m) => ({ ...m, [active.data.id]: r }))} />}
               {!active && (
                 <Card><CardContent className="p-10 text-center text-muted-foreground">Belum ada materi di kursus ini.</CardContent></Card>
@@ -386,7 +428,9 @@ const Learn = () => {
   );
 };
 
-const LessonView = ({ lesson, done, onComplete }: { lesson: Lesson; done: boolean; onComplete: () => void }) => {
+const LessonView = ({ lesson, done, onComplete, hasPrev, hasNext, onPrev, onNext }: {
+  lesson: Lesson; done: boolean; onComplete: () => void; hasPrev: boolean; hasNext: boolean; onPrev: () => void; onNext: () => void;
+}) => {
   const url = lesson.video_url || lesson.file_url || "";
   const showVideo = lesson.content_type === "video" || (!!lesson.video_url);
   return (
@@ -425,10 +469,18 @@ const LessonView = ({ lesson, done, onComplete }: { lesson: Lesson; done: boolea
           <p className="text-sm text-muted-foreground">Materi belum tersedia.</p>
         )}
 
-        <div className="pt-2 border-t flex justify-end">
-          <Button variant={done ? "outline" : "gold"} onClick={onComplete} disabled={done}>
-            {done ? <><CheckCircle2 className="h-4 w-4 mr-2" />Selesai</> : "Tandai Selesai"}
-          </Button>
+        <div className="pt-4 border-t flex items-center justify-between gap-2 flex-wrap">
+          <Button variant="ghost" onClick={onPrev} disabled={!hasPrev}><ArrowLeft className="h-4 w-4 mr-1" />Sebelumnya</Button>
+          <div className="flex gap-2">
+            {!done && <Button variant="outline" onClick={onComplete}>Tandai Selesai</Button>}
+            {hasNext ? (
+              <Button variant="gold" onClick={onNext}>{done ? "Lanjut" : "Selesai & Lanjut"}<ArrowRight className="h-4 w-4 ml-1" /></Button>
+            ) : (
+              <Button variant={done ? "outline" : "gold"} onClick={onComplete} disabled={done}>
+                {done ? <><CheckCircle2 className="h-4 w-4 mr-2" />Selesai</> : "Tandai Selesai"}
+              </Button>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

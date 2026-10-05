@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Progress } from "@/components/ui/progress";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,6 +26,32 @@ const MyCourses = () => {
   const navigate = useNavigate();
   const { enrollments, loading } = useMyEnrollments(user?.id);
 
+  const [pct, setPct] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    const live = enrollments.filter((e) => e.status === "active" || e.status === "completed");
+    if (!user || live.length === 0) return;
+    (async () => {
+      const courseIds = live.map((e) => e.course_id);
+      const { data: mods } = await supabase.from("modules").select("id,course_id").in("course_id", courseIds);
+      const modIds = (mods || []).map((m: any) => m.id);
+      if (!modIds.length) return;
+      const [{ data: les }, { data: prog }] = await Promise.all([
+        (supabase as any).from("lesson_outline").select("id,module_id").in("module_id", modIds),
+        supabase.from("lesson_progress").select("lesson_id").eq("user_id", user.id),
+      ]);
+      const done = new Set((prog || []).map((p: any) => p.lesson_id));
+      const modCourse: Record<string, string> = Object.fromEntries((mods || []).map((m: any) => [m.id, m.course_id]));
+      const tot: Record<string, number> = {}, dn: Record<string, number> = {};
+      (les || []).forEach((l: any) => {
+        const c = modCourse[l.module_id];
+        tot[c] = (tot[c] || 0) + 1;
+        if (done.has(l.id)) dn[c] = (dn[c] || 0) + 1;
+      });
+      setPct(Object.fromEntries(courseIds.map((c) => [c, tot[c] ? Math.round(((dn[c] || 0) / tot[c]) * 100) : 0])));
+    })();
+  }, [enrollments, user]);
+
   const filtered = (statuses: string[]) => enrollments.filter((e) => statuses.includes(e.status));
 
   const card = (e: any) => (
@@ -33,14 +61,18 @@ const MyCourses = () => {
       </div>
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center gap-2">
-          <Badge variant={e.status === "active" ? "default" : "secondary"} className={e.status === "active" ? "bg-gold text-primary" : ""}>{statusLabel[e.status]}</Badge>
+          <Badge variant={e.status === "rejected" ? "destructive" : e.status === "active" ? "default" : "secondary"} className={e.status === "active" ? "bg-gold text-primary" : ""}>{statusLabel[e.status]}</Badge>
           <Badge variant="outline" className="text-xs">{e.course?.type === "online" ? "Online" : "Offline"}</Badge>
         </div>
         <h3 className="font-bold text-primary line-clamp-2">{e.course?.title}</h3>
         {e.course?.duration && <p className="text-xs text-muted-foreground flex items-center gap-1"><Clock size={12} />{e.course.duration}</p>}
         {e.status === "active" || e.status === "completed" ? (
           <div className="space-y-2">
-            <Button variant="gold" className="w-full" onClick={() => navigate(`/learn/${e.course.slug}`)}><PlayCircle size={16} className="mr-2" />{e.status === "completed" ? "Lihat Materi" : "Mulai Belajar"}</Button>
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs text-muted-foreground"><span>Progres belajar</span><span>{pct[e.course_id] ?? 0}%</span></div>
+              <Progress value={pct[e.course_id] ?? 0} className="h-1.5" />
+            </div>
+            <Button variant="gold" className="w-full" onClick={() => navigate(`/learn/${e.course.slug}`)}><PlayCircle size={16} className="mr-2" />{e.status === "completed" ? "Lihat Materi" : (pct[e.course_id] ?? 0) > 0 ? "Lanjut Belajar" : "Mulai Belajar"}</Button>
             {e.certificate_url && (
               <Button variant="outline" className="w-full" onClick={async () => {
                 const { data, error } = await supabase.storage.from("certificates").createSignedUrl(e.certificate_url!, 60 * 60);
@@ -50,7 +82,15 @@ const MyCourses = () => {
             )}
           </div>
         ) : e.status === "pending_payment" ? (
-          <p className="text-xs text-muted-foreground text-center py-2">Admin sedang memverifikasi pembayaran Anda.</p>
+          <p className="text-xs text-muted-foreground text-center py-2">Admin sedang memverifikasi pembayaran Anda (maks. 1×24 jam). Kursus terbuka otomatis setelah disetujui.</p>
+        ) : e.status === "rejected" ? (
+          <div className="space-y-2">
+            <div className="rounded-md border border-destructive/30 bg-destructive/5 p-2 text-xs">
+              <p className="font-semibold text-destructive">Pembayaran belum dapat diverifikasi</p>
+              {e.notes && <p className="text-muted-foreground mt-0.5">{e.notes}</p>}
+            </div>
+            <Button variant="gold" className="w-full" onClick={() => navigate(`/kursus/${e.course?.slug}`)}>Kirim Ulang Bukti</Button>
+          </div>
         ) : (
           <Button variant="outline" className="w-full" onClick={() => navigate(`/kursus/${e.course?.slug}`)}>Lihat Detail</Button>
         )}
@@ -75,10 +115,10 @@ const MyCourses = () => {
               <Button variant="gold" onClick={() => navigate("/kursus")}>Jelajahi Katalog</Button>
             </CardContent></Card>
           ) : (
-            <Tabs defaultValue="active">
+            <Tabs defaultValue={filtered(["active"]).length ? "active" : filtered(["pending_payment", "rejected"]).length ? "pending" : filtered(["completed"]).length ? "completed" : "active"}>
               <TabsList>
                 <TabsTrigger value="active">Aktif ({filtered(["active"]).length})</TabsTrigger>
-                <TabsTrigger value="pending">Menunggu ({filtered(["pending_payment"]).length})</TabsTrigger>
+                <TabsTrigger value="pending">Menunggu / Perlu Tindakan ({filtered(["pending_payment", "rejected"]).length})</TabsTrigger>
                 <TabsTrigger value="completed">Selesai ({filtered(["completed"]).length})</TabsTrigger>
               </TabsList>
               <TabsContent value="active" className="mt-6">
@@ -86,8 +126,8 @@ const MyCourses = () => {
                 {filtered(["active"]).length === 0 && <p className="text-center text-muted-foreground py-12">Tidak ada kursus aktif.</p>}
               </TabsContent>
               <TabsContent value="pending" className="mt-6">
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">{filtered(["pending_payment"]).map(card)}</div>
-                {filtered(["pending_payment"]).length === 0 && <p className="text-center text-muted-foreground py-12">Tidak ada yang menunggu verifikasi.</p>}
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">{filtered(["pending_payment", "rejected"]).map(card)}</div>
+                {filtered(["pending_payment", "rejected"]).length === 0 && <p className="text-center text-muted-foreground py-12">Tidak ada yang menunggu verifikasi.</p>}
               </TabsContent>
               <TabsContent value="completed" className="mt-6">
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">{filtered(["completed"]).map(card)}</div>

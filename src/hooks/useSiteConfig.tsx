@@ -77,7 +77,8 @@ export function applyTheme(cfg: SiteConfig) {
 
   ensureFont(t.headingFont);
   ensureFont(t.bodyFont);
-  r.setProperty("--font-heading", `'${t.headingFont}', serif`);
+  const SERIF = ["DM Serif Display", "Playfair Display", "Lora", "Merriweather"];
+  r.setProperty("--font-heading", `'${t.headingFont}', ${SERIF.includes(t.headingFont) ? "Georgia, serif" : "system-ui, sans-serif"}`);
   r.setProperty("--font-body", `'${t.bodyFont}', system-ui, sans-serif`);
 
   const { title, description, ogImage } = cfg.seo;

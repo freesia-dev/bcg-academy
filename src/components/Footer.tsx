@@ -13,6 +13,7 @@ const Footer = () => {
     { name: "Program Pelatihan", to: "/kursus" },
     { name: "Galeri", to: "/#gallery" },
     { name: "Kontak", to: "/kontak" },
+    { name: "Verifikasi Sertifikat", to: "/verifikasi" },
     { name: "Masuk / Daftar", to: "/auth" },
   ];
   const socials = [

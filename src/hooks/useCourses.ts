@@ -53,9 +53,14 @@ export const useCourse = (slug: string | undefined) => {
       if (c) {
         const { data: mods } = await supabase
           .from("modules")
-          .select("id,title,description,sort_order,lessons(id,title,sort_order,is_preview,content_type,duration_min)")
+          .select("id,title,description,sort_order")
           .eq("course_id", c.id)
           .order("sort_order");
+        const ids = (mods || []).map((m: any) => m.id);
+        const { data: outline } = ids.length
+          ? await (supabase as any).from("lesson_outline").select("*").in("module_id", ids)
+          : { data: [] };
+        mods?.forEach((m: any) => { m.lessons = (outline || []).filter((l: any) => l.module_id === m.id); });
         setModules(mods || []);
       }
       setLoading(false);

@@ -20,7 +20,7 @@ const Hero = () => {
                 <span className="w-1.5 h-1.5 rounded-full bg-gold" />
                 {c.badge}
               </p>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-primary-foreground leading-[1.1]">
+              <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-extrabold tracking-tight text-primary-foreground leading-[1.08]">
                 {c.titleBefore} <span className="text-gradient">{c.titleHighlight}</span> {c.titleAfter}
               </h1>
               <p className="text-base sm:text-lg text-primary-foreground/75 max-w-xl leading-relaxed">{c.subtitle}</p>
@@ -42,7 +42,7 @@ const Hero = () => {
             <dl className="grid grid-cols-3 gap-4 sm:gap-8 pt-8 border-t border-primary-foreground/15 max-w-xl">
               {c.stats.map((s, i) => (
                 <div key={i}>
-                  <dt className="text-2xl sm:text-3xl font-bold text-gold font-playfair" style={{ fontFamily: "var(--font-heading)" }}>{s.value}</dt>
+                  <dt className="text-2xl sm:text-3xl font-bold text-gold" style={{ fontFamily: "var(--font-heading)" }}>{s.value}</dt>
                   <dd className="text-xs sm:text-sm text-primary-foreground/65 mt-1">{s.label}</dd>
                 </div>
               ))}

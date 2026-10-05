@@ -39,7 +39,7 @@ const Auth = () => {
 
   const routeAfterAuth = async (userId: string) => {
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-    const isAdmin = (roles || []).some((r: any) => r.role === "admin");
+    const isAdmin = (roles || []).some((r: any) => r.role === "admin" || r.role === "superadmin");
     if (redirect) navigate(redirect, { replace: true });
     else navigate(isAdmin ? "/admin" : "/kursus-saya", { replace: true });
   };

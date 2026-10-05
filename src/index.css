@@ -121,7 +121,8 @@ All colors MUST be HSL.
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading, 'Playfair Display', serif);
+    font-family: var(--font-heading, 'Plus Jakarta Sans', system-ui, sans-serif);
+    letter-spacing: -0.015em;
   }
 }
 
@@ -130,6 +131,13 @@ All colors MUST be HSL.
     @apply bg-gradient-to-r from-gold to-gold-light bg-clip-text text-transparent;
   }
   
+  .text-gradient-ink {
+    background-image: linear-gradient(90deg, hsl(var(--gold-dark)), hsl(var(--gold)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
   .shadow-glow {
     box-shadow: var(--shadow-gold);
   }

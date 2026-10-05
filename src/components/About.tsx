@@ -1,3 +1,4 @@
+import SectionHeader from "@/components/SectionHeader";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Eye, Flag } from "lucide-react";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
@@ -13,9 +14,7 @@ const About = () => {
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
           <div className="space-y-8">
             <div className="space-y-4">
-              <h2 className="text-3xl md:text-4xl font-bold text-primary">
-                {c.title} <span className="text-gradient">{c.titleHighlight}</span>
-              </h2>
+              <SectionHeader align="left" eyebrow={c.eyebrow} title={c.title} highlight={c.titleHighlight} />
               <p className="text-lg text-muted-foreground leading-relaxed">{c.description}</p>
               <blockquote className="border-l-4 border-gold pl-4 text-muted-foreground italic">
                 "{c.quote}"

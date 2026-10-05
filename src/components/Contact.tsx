@@ -1,3 +1,4 @@
+import SectionHeader from "@/components/SectionHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,12 +27,7 @@ const Contact = () => {
   return (
     <section id="contact" className="py-20 md:py-24">
       <div className="container mx-auto px-4">
-        <div className="text-center max-w-2xl mx-auto mb-14">
-          <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">
-            {c.title} <span className="text-gradient">{c.titleHighlight}</span>
-          </h2>
-          <p className="text-lg text-muted-foreground">{c.subtitle}</p>
-        </div>
+        <SectionHeader eyebrow={c.eyebrow} title={c.title} highlight={c.titleHighlight} subtitle={c.subtitle} />
 
         <div className="grid lg:grid-cols-3 gap-12">
           <div className="space-y-8">
