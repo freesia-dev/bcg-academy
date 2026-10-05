@@ -28,8 +28,11 @@ const SiteConfigAdmin = () => {
   const [saving, setSaving] = useState(false);
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const [showPreview, setShowPreview] = useState(true);
+  const [mobilePreview, setMobilePreview] = useState(false);
   const frame = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState(false);
+  const draftRef = useRef<SiteConfig | null>(null);
+  draftRef.current = draft;
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -47,7 +50,9 @@ const SiteConfigAdmin = () => {
   // iframe preview
   useEffect(() => {
     const onMsg = (e: MessageEvent) => {
-      if (e.origin === window.location.origin && e.data?.type === "bcg-preview-ready") setReady(true);
+      if (e.origin !== window.location.origin) return;
+      if (e.data?.type === "bcg-preview-ready") setReady(true);
+      if (e.data?.type === "bcg-select" && typeof e.data.panel === "string") { setPanel(e.data.panel); setMobilePreview(false); }
     };
     window.addEventListener("message", onMsg);
     return () => window.removeEventListener("message", onMsg);
@@ -136,11 +141,12 @@ const SiteConfigAdmin = () => {
         <div className="font-semibold hidden sm:block">Konfigurasi Situs</div>
         <div className="ml-auto flex items-center gap-2">
           {dirty && <span className="text-xs text-amber-600 font-medium hidden sm:inline">● Belum disimpan</span>}
-          <div className="hidden xl:flex border rounded-md overflow-hidden">
+          <div className="hidden lg:flex border rounded-md overflow-hidden">
             <button className={`px-2.5 py-1.5 ${device === "desktop" ? "bg-muted" : ""}`} onClick={() => setDevice("desktop")} aria-label="Desktop"><Monitor size={16} /></button>
             <button className={`px-2.5 py-1.5 ${device === "mobile" ? "bg-muted" : ""}`} onClick={() => setDevice("mobile")} aria-label="Mobile"><Smartphone size={16} /></button>
           </div>
-          <Button variant="outline" size="sm" className="hidden xl:inline-flex" onClick={() => setShowPreview((v) => !v)}>{showPreview ? "Sembunyikan preview" : "Tampilkan preview"}</Button>
+          <Button variant="outline" size="sm" className="hidden lg:inline-flex" onClick={() => setShowPreview((v) => !v)}>{showPreview ? "Sembunyikan preview" : "Tampilkan preview"}</Button>
+          <Button variant="outline" size="sm" className="lg:hidden" onClick={() => setMobilePreview(true)}><Monitor className="h-4 w-4 mr-1" />Preview</Button>
           <Button asChild variant="outline" size="sm"><a href="/" target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4 mr-1" />Lihat situs</a></Button>
           <Button variant="outline" size="sm" disabled={!dirty || saving} onClick={() => saved && setDraft(saved)}><Undo2 className="h-4 w-4 mr-1" />Batal</Button>
           <Button variant="gold" size="sm" disabled={!dirty || saving} onClick={save}>
@@ -237,10 +243,12 @@ const SiteConfigAdmin = () => {
           </div>
         </main>
 
-        {showPreview && (
-          <aside className="w-[46%] max-w-[760px] shrink-0 border-l bg-muted hidden xl:flex flex-col items-center p-3">
-            <div className={`h-full bg-background shadow-lg rounded-lg overflow-hidden border transition-all ${device === "mobile" ? "w-[390px]" : "w-full"}`}>
-              <iframe ref={frame} src="/?preview=1" title="Preview situs" className="w-full h-full" onLoad={() => setReady(false)} />
+        {(showPreview || mobilePreview) && (
+          <aside className={mobilePreview ? "fixed inset-0 z-50 bg-muted flex flex-col items-center p-3" : "w-[44%] max-w-[760px] shrink-0 border-l bg-muted hidden lg:flex flex-col items-center p-3"}>
+            {mobilePreview && <Button size="sm" variant="outline" className="self-end mb-2" onClick={() => setMobilePreview(false)}>Tutup preview</Button>}
+            <p className="text-[11px] text-muted-foreground mb-2">Klik bagian mana pun di preview untuk langsung mengeditnya</p>
+            <div className={`flex-1 min-h-0 w-full bg-background shadow-lg rounded-lg overflow-hidden border transition-all ${device === "mobile" && !mobilePreview ? "max-w-[390px]" : ""}`}>
+              <iframe ref={frame} src="/?preview=1" title="Preview situs" className="w-full h-full" onLoad={() => { setReady(true); frame.current?.contentWindow?.postMessage({ type: "bcg-config", config: draftRef.current }, window.location.origin); }} />
             </div>
           </aside>
         )}

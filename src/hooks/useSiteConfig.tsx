@@ -119,8 +119,26 @@ export const SiteConfigProvider = ({ children }: { children: ReactNode }) => {
       }
     };
     window.addEventListener("message", onMsg);
+
+    // Klik di preview → pilih section yang sesuai di editor; tautan tidak berpindah halaman
+    const ids: Record<string, string> = { home: "hero", offer: "offer", programs: "programs", about: "about", team: "team", gallery: "gallery", contact: "contact" };
+    const style = document.createElement("style");
+    style.textContent = "main section[id]{cursor:pointer;transition:outline-color .15s;outline:3px solid transparent;outline-offset:-3px}main section[id]:hover{outline-color:hsl(var(--gold)/.7)}";
+    document.head.appendChild(style);
+    const onClick = (e: MouseEvent) => {
+      const sec = (e.target as HTMLElement).closest("main section[id]");
+      e.preventDefault();
+      e.stopPropagation();
+      if (sec && ids[sec.id]) window.parent?.postMessage({ type: "bcg-select", panel: ids[sec.id] }, window.location.origin);
+    };
+    document.addEventListener("click", onClick, true);
+
     window.parent?.postMessage({ type: "bcg-preview-ready" }, window.location.origin);
-    return () => window.removeEventListener("message", onMsg);
+    return () => {
+      window.removeEventListener("message", onMsg);
+      document.removeEventListener("click", onClick, true);
+      style.remove();
+    };
   }, []);
 
   useEffect(() => { applyTheme(cfg); }, [cfg]);
