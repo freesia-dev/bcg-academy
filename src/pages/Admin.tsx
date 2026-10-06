@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
-  Award, BarChart3, CalendarDays, ClipboardList, ExternalLink, GraduationCap, Images, Landmark, LayoutDashboard, Loader2,
+  Award, BarChart3, CalendarDays, ClipboardCheck, ClipboardList, ExternalLink, GraduationCap, Images, Landmark, LayoutDashboard, Loader2,
   LogOut, Menu, Settings2, ShieldCheck, Users, type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import AdminOverview, { type AdminSection } from "@/components/admin/AdminOverview";
 import RegistrantsAdmin, { type RegistrantFilter } from "@/components/admin/RegistrantsAdmin";
 import BatchesManager from "@/components/admin/BatchesManager";
+import ClassroomAdmin from "@/components/admin/ClassroomAdmin";
 import CoursesAdmin from "@/components/admin/CoursesAdmin";
 import ParticipantsAdmin from "@/components/admin/ParticipantsAdmin";
 import ReportsAdmin from "@/components/admin/ReportsAdmin";
@@ -30,6 +31,7 @@ const NAV: { group: string; items: NavItem[] }[] = [
       { id: "ringkasan", label: "Ringkasan", icon: LayoutDashboard, title: "Ringkasan", desc: "Apa yang perlu ditangani hari ini." },
       { id: "pendaftar", label: "Pendaftar & Bayar", icon: ClipboardList, title: "Pendaftar & Pembayaran", desc: "Verifikasi bukti bayar, masukkan pendaftar minat ke angkatan, dan kabari peserta lewat WhatsApp." },
       { id: "angkatan", label: "Angkatan", icon: CalendarDays, title: "Angkatan", desc: "Jadwal kelas per program: tanggal, lokasi, kuota, dan harga khusus. Hanya angkatan berstatus \"dibuka\" yang bisa dipilih pendaftar." },
+      { id: "kelas", label: "Kelas & Absensi", icon: ClipboardCheck, title: "Kelas & Absensi", desc: "Catat kehadiran tiap pertemuan, tentukan siapa yang lulus, lalu terbitkan sertifikat ber-QR sekaligus." },
       { id: "peserta", label: "Progres Peserta", icon: Users, title: "Progres Peserta", desc: "Kemajuan belajar peserta: materi selesai, kuis lulus, dan persentase progres." },
     ],
   },
@@ -37,7 +39,7 @@ const NAV: { group: string; items: NavItem[] }[] = [
     group: "Katalog",
     items: [
       { id: "program", label: "Program", icon: GraduationCap, title: "Program", desc: "Katalog yang tampil di situs. Atur deskripsi, biaya, syarat, FAQ, materi online, dan angkatan tiap program." },
-      { id: "sertifikat", label: "Sertifikat", icon: Award, title: "Template Sertifikat", desc: "Desain sertifikat per program. Dipakai saat peserta dinyatakan lulus." },
+      { id: "sertifikat", label: "Template Sertifikat", icon: Award, title: "Template Sertifikat", desc: "Desain sertifikat per program: teks, logo, tanda tangan, warna, dan QR verifikasi. Penerbitan dilakukan di menu Kelas & Absensi." },
     ],
   },
   {
@@ -200,6 +202,7 @@ const Admin = () => {
   switch (section) {
     case "pendaftar": content = <RegistrantsAdmin initialFilter={rawFilter || "action"} initialBatch={params.get("batch")} />; break;
     case "angkatan": content = <BatchesManager />; break;
+    case "kelas": content = <ClassroomAdmin initialBatch={params.get("batch")} />; break;
     case "peserta": content = <ParticipantsAdmin />; break;
     case "program": content = <CoursesAdmin />; break;
     case "sertifikat": content = <CertificatesAdmin />; break;

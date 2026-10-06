@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  AlertCircle, Award, Building2, CalendarDays, Check, Clock, GraduationCap, Loader2, MapPin, MessageCircle, PlayCircle, Upload,
+  AlertCircle, Award, BookOpen, Building2, CalendarDays, Check, Clock, GraduationCap, Link2, Loader2, MapPin, MessageCircle, PlayCircle, ShieldCheck, Upload,
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -17,11 +17,12 @@ import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDate, formatDateRange, regCode, rupiah } from "@/lib/batches";
 import { cn } from "@/lib/utils";
+import { MARK_BY_ID, countedSessions, dayLong, dayShort, recapFor, todayIso, verifyUrl, type AttendanceMap, type Session } from "@/lib/classroom";
 import { toast } from "sonner";
 
 const db = supabase as any;
 const METHODS = ["Transfer bank", "QRIS / e-wallet", "Tunai di kantor"];
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => todayIso();
 
 type Tone = "info" | "warn" | "error" | "ok";
 interface View { headline: string; detail: string; tone: Tone; steps: string[]; current: number }
@@ -50,7 +51,9 @@ const describe = (e: any): View => {
       };
     }
     case "completed":
-      return { headline: "Selesai", detail: "Selamat! Sertifikat Anda siap diunduh.", tone: "ok", steps: base, current: 5 };
+      return e.certificate_url
+        ? { headline: "Lulus", detail: "Selamat! Sertifikat Anda sudah terbit dan bisa diunduh.", tone: "ok", steps: base, current: 5 }
+        : { headline: "Lulus", detail: "Selamat, Anda dinyatakan lulus. Sertifikat sedang disiapkan admin.", tone: "ok", steps: base, current: 4 };
     default:
       return { headline: "Dibatalkan", detail: "", tone: "info", steps: base, current: 0 };
   }
@@ -74,6 +77,8 @@ const MyCourses = () => {
   const [file, setFile] = useState<File | null>(null);
   const [method, setMethod] = useState(METHODS[0]);
   const [busy, setBusy] = useState(false);
+  const [lessonCount, setLessonCount] = useState<Record<string, number>>({});
+  const [classData, setClassData] = useState<{ sessions: Session[]; att: AttendanceMap }>({ sessions: [], att: {} });
 
   useEffect(() => {
     supabase.from("site_content").select("value").eq("key", "payment_info").maybeSingle().then(({ data }) => setPayInfo(data?.value || null));
@@ -99,6 +104,44 @@ const MyCourses = () => {
       setPct(Object.fromEntries(courseIds.map((c) => [c, tot[c] ? Math.round(((dn[c] || 0) / tot[c]) * 100) : 0])));
     })();
   }, [enrollments, user]);
+
+  // jumlah materi per program (untuk tombol "Materi kelas")
+  useEffect(() => {
+    const live = enrollments.filter((e) => e.status === "active" || e.status === "completed");
+    if (!live.length) return;
+    (async () => {
+      const courseIds = live.map((e) => e.course_id);
+      const { data: mods } = await supabase.from("modules").select("id,course_id").in("course_id", courseIds);
+      const modIds = (mods || []).map((m: any) => m.id);
+      if (!modIds.length) return;
+      const { data: les } = await db.from("lesson_outline").select("id,module_id").in("module_id", modIds);
+      const modCourse: Record<string, string> = Object.fromEntries((mods || []).map((m: any) => [m.id, m.course_id]));
+      const tot: Record<string, number> = {};
+      (les || []).forEach((l: any) => { const c = modCourse[l.module_id]; tot[c] = (tot[c] || 0) + 1; });
+      setLessonCount(tot);
+    })();
+  }, [enrollments]);
+
+  // jadwal pertemuan & absensi kelas tatap muka
+  useEffect(() => {
+    const live = enrollments.filter((e) => (e.status === "active" || e.status === "completed") && e.batch_id);
+    if (!live.length) return;
+    (async () => {
+      const { data: ss } = await db.from("batch_sessions").select("*").in("batch_id", live.map((e) => e.batch_id)).order("session_date");
+      const sessions = (ss as Session[]) || [];
+      const att: AttendanceMap = {};
+      if (sessions.length) {
+        const { data: rows } = await db.from("attendance").select("session_id,enrollment_id,status").in("enrollment_id", live.map((e) => e.id));
+        (rows || []).forEach((a: any) => { (att[a.session_id] ||= {})[a.enrollment_id] = a.status; });
+      }
+      setClassData({ sessions, att });
+    })();
+  }, [enrollments]);
+
+  const copyVerify = async (id: string) => {
+    await navigator.clipboard.writeText(verifyUrl(id)).catch(() => {});
+    toast.success("Link verifikasi disalin. Bagikan ke HRD atau tempel di CV/LinkedIn.");
+  };
 
   const openCert = async (path: string) => {
     const { data, error } = await supabase.storage.from("certificates").createSignedUrl(path, 60 * 60);
@@ -184,6 +227,55 @@ const MyCourses = () => {
               </div>
             )}
 
+            {!online && e.batch_id && (e.status === "active" || e.status === "completed") && (() => {
+              const mine = classData.sessions.filter((s) => s.batch_id === e.batch_id);
+              if (!mine.length) return null;
+              const counted = countedSessions(mine, classData.att);
+              const r = recapFor(e.id, counted, classData.att);
+              const next = mine.find((s) => s.session_date >= today());
+              return (
+                <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <span className="text-sm font-semibold">Kehadiran</span>
+                    <span className="text-xs text-muted-foreground">{counted.length ? `${r.hadir} dari ${counted.length} pertemuan · ${r.pct}%` : `${mine.length} pertemuan terjadwal`}</span>
+                  </div>
+                  {counted.length > 0 && <Progress value={r.pct} className="h-1.5" />}
+                  {next && e.status === "active" && (
+                    <p className="text-sm flex items-start gap-2"><CalendarDays className="h-4 w-4 mt-0.5 shrink-0 text-gold-dark" />
+                      <span>Pertemuan berikutnya: <b>{next.session_date === today() ? "hari ini" : dayLong(next.session_date)}</b>{next.topic ? ` — ${next.topic}` : ""}</span>
+                    </p>
+                  )}
+                  <details>
+                    <summary className="cursor-pointer text-xs font-semibold text-primary">Lihat jadwal & absensi</summary>
+                    <ul className="mt-2 divide-y text-sm">
+                      {mine.map((s) => {
+                        const m = classData.att[s.id]?.[e.id];
+                        return (
+                          <li key={s.id} className="flex items-center justify-between gap-3 py-1.5">
+                            <span className="min-w-0 truncate"><span className="text-muted-foreground">{dayShort(s.session_date)}</span> · {s.title}{s.topic ? ` — ${s.topic}` : ""}</span>
+                            <span className={cn("text-xs font-semibold shrink-0", m ? MARK_BY_ID[m].className : "text-muted-foreground")}>
+                              {m ? MARK_BY_ID[m].label : s.session_date > today() ? "Akan datang" : "—"}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </details>
+                </div>
+              );
+            })()}
+
+            {e.status === "completed" && e.certificate_url && (
+              <div className="rounded-xl border border-gold/40 bg-gold/5 p-4 flex flex-wrap items-center gap-3">
+                <ShieldCheck className="h-8 w-8 text-gold-dark shrink-0" />
+                <div className="flex-1 min-w-[180px]">
+                  <p className="text-sm font-semibold">Sertifikat terverifikasi</p>
+                  <p className="text-xs text-muted-foreground font-mono">{e.certificate_number || regCode(e.id)}</p>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => copyVerify(e.id)}><Link2 className="h-4 w-4" />Salin link verifikasi</Button>
+              </div>
+            )}
+
             {online && (e.status === "active" || e.status === "completed") && (
               <div className="space-y-1">
                 <div className="flex justify-between text-xs text-muted-foreground"><span>Progres belajar</span><span>{pct[e.course_id] ?? 0}%</span></div>
@@ -197,6 +289,9 @@ const MyCourses = () => {
               {online && e.status === "active" && <Button onClick={() => navigate(`/learn/${e.course.slug}`)}><PlayCircle className="h-4 w-4" />{(pct[e.course_id] ?? 0) > 0 ? "Lanjut belajar" : "Mulai belajar"}</Button>}
               {e.status === "completed" && e.certificate_url && <Button variant="gold" onClick={() => openCert(e.certificate_url)}><Award className="h-4 w-4" />Unduh sertifikat</Button>}
               {online && e.status === "completed" && <Button variant="outline" onClick={() => navigate(`/learn/${e.course.slug}`)}>Lihat materi</Button>}
+              {!online && (e.status === "active" || e.status === "completed") && (lessonCount[e.course_id] || 0) > 0 && (
+                <Button variant={e.status === "active" ? "default" : "outline"} onClick={() => navigate(`/learn/${e.course.slug}`)}><BookOpen className="h-4 w-4" />Materi kelas</Button>
+              )}
               <Button asChild variant="outline"><a href={wa} target="_blank" rel="noreferrer"><MessageCircle className="h-4 w-4" />Hubungi admin</a></Button>
               {["waitlist", "pending_payment", "rejected"].includes(e.status) && (
                 <Button variant="ghost" className="text-muted-foreground" onClick={() => cancel(e)}>Batalkan</Button>

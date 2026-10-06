@@ -28,6 +28,7 @@ type Course = {
   instructor_name: string | null; price: number; is_free: boolean; currency: string;
   is_published: boolean; sort_order: number;
   highlights?: string[]; requirements?: string[]; faq?: { q: string; a: string }[];
+  min_attendance?: number;
 };
 type Module = { id: string; course_id: string; title: string; description: string | null; sort_order: number; prerequisite_module_id: string | null };
 type Lesson = {
@@ -179,6 +180,7 @@ const CourseEditor = ({ course, onBack }: { course: Course; onBack: () => void }
       highlights: (c.highlights || []).filter(Boolean),
       requirements: (c.requirements || []).filter(Boolean),
       faq: (c.faq || []).filter((f) => f.q?.trim() && f.a?.trim()),
+      min_attendance: Math.min(100, Math.max(0, c.min_attendance ?? 75)),
     };
     if (isNew) {
       const { data, error } = await supabase.from("courses").insert(payload).select().single();
@@ -241,6 +243,13 @@ const CourseEditor = ({ course, onBack }: { course: Course; onBack: () => void }
             </div>
             <div><Label>Urutan</Label><Input type="number" value={c.sort_order} onChange={(e) => setC({ ...c, sort_order: parseInt(e.target.value) || 0 })} /></div>
           </div>
+          {c.type !== "online" && (
+            <div className="max-w-xs">
+              <Label>Minimal kehadiran untuk lulus (%)</Label>
+              <Input type="number" min={0} max={100} value={c.min_attendance ?? 75} onChange={(e) => setC({ ...c, min_attendance: parseInt(e.target.value) || 0 })} />
+              <p className="text-xs text-muted-foreground mt-1">Dipakai di menu Kelas & Absensi untuk menandai peserta yang memenuhi syarat.</p>
+            </div>
+          )}
           <div><Label>Foto cover (rasio 16:10)</Label><ImageField value={c.cover_image || ""} onChange={(v) => setC({ ...c, cover_image: v })} /></div>
           <div className="grid md:grid-cols-2 gap-3">
             <div>
@@ -285,7 +294,7 @@ const CourseEditor = ({ course, onBack }: { course: Course; onBack: () => void }
       {!isNew && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Materi online (modul, pelajaran & kuis)</CardTitle>
+            <CardTitle>Materi (modul, pelajaran & kuis)</CardTitle>
             <Button variant="gold" size="sm" onClick={addModule}><Plus className="h-4 w-4 mr-1" />Tambah Modul</Button>
           </CardHeader>
           <CardContent>

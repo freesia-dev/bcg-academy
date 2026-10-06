@@ -2,14 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, Circle, PlayCircle, FileText, FileQuestion, Lock, ArrowLeft, ArrowRight, Award, Loader2 } from "lucide-react";
+import { CheckCircle2, Circle, PlayCircle, FileText, FileQuestion, Lock, ArrowLeft, ArrowRight, Award, Loader2, ListChecks, Download } from "lucide-react";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -42,7 +44,7 @@ type Module = {
   lessons: Lesson[];
   quizzes: Quiz[];
 };
-type Course = { id: string; slug: string; title: string };
+type Course = { id: string; slug: string; title: string; type: string | null };
 
 type ActiveItem =
   | { kind: "lesson"; data: Lesson }
@@ -87,6 +89,8 @@ const Learn = () => {
   const [enrolled, setEnrolled] = useState(false);
   const [certPath, setCertPath] = useState<string | null>(null);
   const [claiming, setClaiming] = useState(false);
+  const [outlineOpen, setOutlineOpen] = useState(false);
+  const { brand } = useSiteConfig();
 
   useEffect(() => {
     if (authLoading) return;
@@ -99,7 +103,7 @@ const Learn = () => {
       setLoading(true);
       const { data: c } = await supabase
         .from("courses")
-        .select("id, slug, title")
+        .select("id, slug, title, type")
         .eq("slug", slug)
         .maybeSingle();
       if (!c) {
@@ -258,172 +262,185 @@ const Learn = () => {
     if (url) window.open(url, "_blank");
   };
 
+  const isOnline = course?.type === "online";
+  const doneLessons = allLessons.filter((l) => progress.has(l.id)).length;
+  const position = seqIndex >= 0 ? seqIndex + 1 : 0;
+
+  const shell = (children: React.ReactNode) => (
+    <div className="min-h-screen bg-muted/30">
+      <Header />
+      <main className="pt-28 pb-20 container mx-auto px-4">{children}</main>
+      <Footer />
+    </div>
+  );
+
   if (authLoading || loading) {
-    return (
-      <div className="min-h-screen">
-        <Header />
-        <main className="pt-32 pb-20 container mx-auto px-4">
-          <Skeleton className="h-8 w-64 mb-6" />
-          <div className="grid lg:grid-cols-[1fr_320px] gap-6">
-            <Skeleton className="aspect-video w-full" />
-            <Skeleton className="h-96 w-full" />
-          </div>
-        </main>
-        <Footer />
-      </div>
+    return shell(
+      <>
+        <Skeleton className="h-8 w-64 mb-6" />
+        <div className="grid lg:grid-cols-[1fr_340px] gap-6">
+          <Skeleton className="aspect-video w-full rounded-2xl" />
+          <Skeleton className="h-96 w-full rounded-2xl" />
+        </div>
+      </>,
     );
   }
 
   if (!course) {
-    return (
-      <div className="min-h-screen">
-        <Header />
-        <main className="pt-32 pb-20 container mx-auto px-4 max-w-2xl text-center">
-          <h1 className="text-2xl font-bold mb-4">Kursus tidak ditemukan</h1>
-          <Link to="/kursus"><Button variant="gold">Lihat Katalog</Button></Link>
-        </main>
-        <Footer />
-      </div>
+    return shell(
+      <div className="max-w-xl mx-auto text-center rounded-2xl border bg-card p-10">
+        <h1 className="text-2xl font-bold mb-2">Program tidak ditemukan</h1>
+        <p className="text-muted-foreground mb-6">Tautan mungkin sudah berubah.</p>
+        <Button asChild variant="gold"><Link to="/kursus">Lihat program</Link></Button>
+      </div>,
     );
   }
 
   if (!enrolled) {
-    return (
-      <div className="min-h-screen">
-        <Header />
-        <main className="pt-32 pb-20 container mx-auto px-4 max-w-2xl">
-          <Card>
-            <CardContent className="p-10 text-center space-y-4">
-              <Lock className="h-12 w-12 mx-auto text-gold" />
-              <h1 className="text-2xl font-bold">Akses Terkunci</h1>
-              <p className="text-muted-foreground">
-                Anda belum terdaftar atau pembayaran belum diverifikasi untuk kursus ini.
-              </p>
-              <div className="flex gap-2 justify-center">
-                <Link to={`/kursus/${slug}`}><Button variant="gold">Daftar Kursus</Button></Link>
-                <Link to="/kursus-saya"><Button variant="outline">Kursus Saya</Button></Link>
-              </div>
-            </CardContent>
-          </Card>
-        </main>
-        <Footer />
-      </div>
+    return shell(
+      <div className="max-w-xl mx-auto text-center rounded-2xl border bg-card p-10 space-y-4">
+        <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-gold/15 text-gold-dark"><Lock className="h-7 w-7" /></span>
+        <h1 className="text-2xl font-bold text-primary">Materi untuk peserta aktif</h1>
+        <p className="text-muted-foreground">Materi {course.title} terbuka setelah pendaftaran Anda aktif (pembayaran sudah diverifikasi).</p>
+        <div className="flex flex-wrap gap-2 justify-center">
+          <Button asChild variant="gold"><Link to={`/kursus/${slug}`}>Lihat program</Link></Button>
+          <Button asChild variant="outline"><Link to="/kursus-saya">Dashboard Saya</Link></Button>
+        </div>
+      </div>,
     );
   }
 
-  return (
-    <div className="dark min-h-screen bg-background text-foreground">
-      <Header />
-      <main className="pt-24 pb-16">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
-            <div>
-              <Link to="/kursus-saya" className="text-sm text-muted-foreground hover:text-gold inline-flex items-center gap-1">
-                <ArrowLeft className="h-4 w-4" /> Kembali ke Kursus Saya
-              </Link>
-              <h1 className="text-2xl md:text-3xl font-bold text-primary mt-1">{course.title}</h1>
+  const outline = (
+    <nav aria-label="Daftar materi" className="space-y-5">
+      {modules.length === 0 && <p className="text-sm text-muted-foreground">Belum ada modul.</p>}
+      {modules.map((m, mi) => {
+        const total = m.lessons.length;
+        const done = m.lessons.filter((l) => progress.has(l.id)).length;
+        return (
+          <div key={m.id}>
+            <div className="flex items-baseline justify-between gap-2 mb-1.5 px-1">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Modul {mi + 1} · {m.title}</p>
+              {total > 0 && <span className="text-[11px] tabular-nums text-muted-foreground">{done}/{total}</span>}
             </div>
-            <div className="flex items-center gap-3 flex-wrap">
-              {certPath ? (
-                <Button variant="gold" onClick={() => openCertificate(certPath)}>
-                  <Award className="h-4 w-4 mr-2" /> Unduh Sertifikat
-                </Button>
-              ) : canClaim ? (
-                <Button variant="gold" onClick={claimCertificate} disabled={claiming}>
-                  {claiming ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Award className="h-4 w-4 mr-2" />}
-                  Klaim Sertifikat
-                </Button>
-              ) : null}
-              <div className="min-w-[200px]">
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-muted-foreground">Progress</span>
-                  <span className="font-semibold text-gold">{completionPct}%</span>
-                </div>
-                <Progress value={completionPct} />
+            <ul className="space-y-0.5">
+              {m.lessons.map((l) => {
+                const isDone = progress.has(l.id);
+                const isActive = activeKind === "lesson" && activeId === l.id;
+                return (
+                  <li key={l.id}>
+                    <button onClick={() => { setActiveId(l.id); setActiveKind("lesson"); setOutlineOpen(false); window.scrollTo({ top: 0 }); }}
+                      aria-current={isActive ? "step" : undefined}
+                      className={`w-full flex items-center gap-2.5 text-left text-sm px-2.5 py-2 rounded-lg transition-colors ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}>
+                      {isDone
+                        ? <CheckCircle2 className={`h-4 w-4 shrink-0 ${isActive ? "text-gold" : "text-emerald-600"}`} />
+                        : <Circle className={`h-4 w-4 shrink-0 ${isActive ? "text-primary-foreground/60" : "text-muted-foreground/60"}`} />}
+                      <span className="flex-1 line-clamp-2">{l.title}</span>
+                      {l.content_type === "text" ? <FileText className="h-3.5 w-3.5 shrink-0 opacity-50" /> : <PlayCircle className="h-3.5 w-3.5 shrink-0 opacity-50" />}
+                      {l.duration_min ? <span className={`text-[11px] ${isActive ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{l.duration_min}m</span> : null}
+                    </button>
+                  </li>
+                );
+              })}
+              {m.quizzes.map((q) => {
+                const att = attempts[q.id];
+                const isActive = activeKind === "quiz" && activeId === q.id;
+                return (
+                  <li key={q.id}>
+                    <button onClick={() => { setActiveId(q.id); setActiveKind("quiz"); setOutlineOpen(false); window.scrollTo({ top: 0 }); }}
+                      className={`w-full flex items-center gap-2.5 text-left text-sm px-2.5 py-2 rounded-lg transition-colors ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}>
+                      <FileQuestion className={`h-4 w-4 shrink-0 ${att?.passed ? "text-emerald-600" : "opacity-60"}`} />
+                      <span className="flex-1 line-clamp-2">Kuis: {q.title}</span>
+                      {att && <Badge variant={att.passed ? "default" : "secondary"} className="text-[11px]">{att.score}</Badge>}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      })}
+    </nav>
+  );
+
+  const certAction = certPath ? (
+    <Button variant="gold" size="sm" onClick={() => openCertificate(certPath)} aria-label="Unduh sertifikat"><Award className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Sertifikat</span></Button>
+  ) : isOnline && canClaim ? (
+    <Button variant="gold" size="sm" onClick={claimCertificate} disabled={claiming}>
+      {claiming ? <Loader2 className="h-4 w-4 sm:mr-1.5 animate-spin" /> : <Award className="h-4 w-4 sm:mr-1.5" />}<span className="hidden sm:inline">Klaim sertifikat</span>
+    </Button>
+  ) : null;
+
+  return (
+    <div className="min-h-screen bg-muted/30">
+      {/* Bilah atas ruang belajar */}
+      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur border-b">
+        <div className="container mx-auto px-4 h-16 flex items-center gap-3">
+          <Button asChild variant="ghost" size="icon" aria-label="Kembali ke Dashboard Saya">
+            <Link to="/kursus-saya"><ArrowLeft className="h-5 w-5" /></Link>
+          </Button>
+          <img src={brand.logo} alt={brand.name} className="hidden md:block h-8 w-auto" />
+          <span className="hidden md:block h-6 w-px bg-border" />
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold text-primary truncate leading-tight">{course.title}</p>
+            <p className="text-xs text-muted-foreground">{sequence.length ? `Langkah ${position} dari ${sequence.length}` : "Ruang belajar"}</p>
+          </div>
+          <div className="hidden md:block w-44">
+            <div className="flex justify-between text-[11px] mb-1"><span className="text-muted-foreground">{doneLessons}/{allLessons.length} pelajaran</span><span className="font-semibold">{completionPct}%</span></div>
+            <Progress value={completionPct} className="h-1.5" />
+          </div>
+          {certAction}
+          <Button variant="outline" size="sm" className="lg:hidden" onClick={() => setOutlineOpen(true)} aria-label="Daftar materi"><ListChecks className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Materi</span></Button>
+        </div>
+        <Progress value={completionPct} className="h-0.5 rounded-none md:hidden" />
+      </header>
+
+      <main className="container mx-auto px-4 py-6 md:py-8">
+        {isOnline && canClaim && !certPath && (
+          <div className="mb-6 rounded-2xl border border-gold/40 bg-gold/10 p-5 flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <Award className="h-8 w-8 text-gold-dark" />
+              <div>
+                <p className="font-bold text-primary">Selamat! Semua materi dan kuis sudah selesai.</p>
+                <p className="text-sm text-muted-foreground">Klaim sertifikat kelulusan Anda sekarang.</p>
               </div>
             </div>
+            <Button variant="gold" onClick={claimCertificate} disabled={claiming}>
+              {claiming ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Award className="h-4 w-4 mr-2" />}Klaim sertifikat
+            </Button>
+          </div>
+        )}
+
+        <div className="grid lg:grid-cols-[minmax(0,1fr)_340px] gap-6 items-start">
+          <div className="min-w-0 space-y-4">
+            {active?.kind === "lesson" && <LessonView lesson={active.data} done={progress.has(active.data.id)}
+              onComplete={() => markComplete(active.data.id)}
+              hasPrev={seqIndex > 0} hasNext={seqIndex >= 0 && seqIndex < sequence.length - 1}
+              onPrev={() => goTo(seqIndex - 1)}
+              onNext={async () => { if (await markComplete(active.data.id)) goTo(seqIndex + 1); }} />}
+            {active?.kind === "quiz" && <QuizView quiz={active.data} prev={attempts[active.data.id]} userId={user!.id} onSubmitted={(r) => setAttempts((m) => ({ ...m, [active.data.id]: r }))} />}
+            {!active && (
+              <div className="rounded-2xl border bg-card p-10 text-center text-muted-foreground">Materi untuk program ini belum diunggah. Cek lagi nanti.</div>
+            )}
           </div>
 
-          {canClaim && !certPath && (
-            <Card className="mb-6 border-gold/40 bg-gold/10">
-              <CardContent className="p-5 flex items-center justify-between gap-4 flex-wrap">
-                <div className="flex items-center gap-3">
-                  <Award className="h-8 w-8 text-gold" />
-                  <div>
-                    <p className="font-bold">Selamat! Seluruh materi dan kuis sudah selesai.</p>
-                    <p className="text-sm text-muted-foreground">Klaim sertifikat kelulusan Anda sekarang.</p>
-                  </div>
-                </div>
-                <Button variant="gold" onClick={claimCertificate} disabled={claiming}>
-                  {claiming ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Award className="h-4 w-4 mr-2" />}Klaim Sertifikat
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-
-          <div className="grid lg:grid-cols-[1fr_340px] gap-6">
-            <div className="space-y-4">
-              {active?.kind === "lesson" && <LessonView lesson={active.data} done={progress.has(active.data.id)}
-                onComplete={() => markComplete(active.data.id)}
-                hasPrev={seqIndex > 0} hasNext={seqIndex >= 0 && seqIndex < sequence.length - 1}
-                onPrev={() => goTo(seqIndex - 1)}
-                onNext={async () => { if (await markComplete(active.data.id)) goTo(seqIndex + 1); }} />}
-              {active?.kind === "quiz" && <QuizView quiz={active.data} prev={attempts[active.data.id]} userId={user!.id} onSubmitted={(r) => setAttempts((m) => ({ ...m, [active.data.id]: r }))} />}
-              {!active && (
-                <Card><CardContent className="p-10 text-center text-muted-foreground">Belum ada materi di kursus ini.</CardContent></Card>
+          <aside className="hidden lg:block sticky top-24">
+            <div className="rounded-2xl border bg-card p-4 max-h-[calc(100vh-8rem)] overflow-y-auto">
+              <p className="font-semibold text-sm mb-4 px-1">Daftar materi</p>
+              {outline}
+              {!isOnline && (
+                <p className="mt-5 rounded-lg bg-muted/60 p-3 text-xs text-muted-foreground">Sertifikat program tatap muka diterbitkan admin setelah Anda dinyatakan lulus (berdasarkan kehadiran).</p>
               )}
             </div>
-
-            <aside className="space-y-3">
-              <Card>
-                <CardHeader className="pb-3"><CardTitle className="text-base">Daftar Materi</CardTitle></CardHeader>
-                <CardContent className="space-y-4 max-h-[70vh] overflow-y-auto">
-                  {modules.length === 0 && <p className="text-sm text-muted-foreground">Belum ada modul.</p>}
-                  {modules.map((m, mi) => (
-                    <div key={m.id} className="space-y-1">
-                      <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Modul {mi + 1}: {m.title}
-                      </div>
-                      {m.lessons.map((l) => {
-                        const done = progress.has(l.id);
-                        const isActive = activeKind === "lesson" && activeId === l.id;
-                        return (
-                          <button
-                            key={l.id}
-                            onClick={() => { setActiveId(l.id); setActiveKind("lesson"); }}
-                            className={`w-full flex items-center gap-2 text-left text-sm px-2 py-2 rounded-md transition-colors ${isActive ? "bg-gold/10 text-gold" : "hover:bg-muted"}`}
-                          >
-                            {done ? <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" /> : <Circle className="h-4 w-4 text-muted-foreground shrink-0" />}
-                            {l.content_type === "text" ? <FileText className="h-4 w-4 shrink-0 opacity-70" /> : <PlayCircle className="h-4 w-4 shrink-0 opacity-70" />}
-                            <span className="flex-1 line-clamp-2">{l.title}</span>
-                            {l.duration_min ? <span className="text-xs text-muted-foreground">{l.duration_min}m</span> : null}
-                          </button>
-                        );
-                      })}
-                      {m.quizzes.map((q) => {
-                        const att = attempts[q.id];
-                        const isActive = activeKind === "quiz" && activeId === q.id;
-                        return (
-                          <button
-                            key={q.id}
-                            onClick={() => { setActiveId(q.id); setActiveKind("quiz"); }}
-                            className={`w-full flex items-center gap-2 text-left text-sm px-2 py-2 rounded-md transition-colors ${isActive ? "bg-gold/10 text-gold" : "hover:bg-muted"}`}
-                          >
-                            <FileQuestion className="h-4 w-4 shrink-0 opacity-70" />
-                            <span className="flex-1 line-clamp-2">Kuis: {q.title}</span>
-                            {att && <Badge variant={att.passed ? "default" : "secondary"} className="text-xs">{att.score}</Badge>}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </aside>
-          </div>
+          </aside>
         </div>
       </main>
-      <Footer />
+
+      <Sheet open={outlineOpen} onOpenChange={setOutlineOpen}>
+        <SheetContent side="right" className="w-[320px] sm:w-[380px] overflow-y-auto">
+          <SheetTitle className="mb-4">Daftar materi</SheetTitle>
+          {outline}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
@@ -434,50 +451,59 @@ const LessonView = ({ lesson, done, onComplete, hasPrev, hasNext, onPrev, onNext
   const url = lesson.video_url || lesson.file_url || "";
   const showVideo = lesson.content_type === "video" || (!!lesson.video_url);
   return (
-    <Card>
-      <CardContent className="p-6 space-y-5">
+    <Card className="rounded-2xl shadow-none overflow-hidden">
+      {showVideo && url && (
+        isVideoFile(url) ? (
+          <video src={url} controls className="w-full bg-black aspect-video" />
+        ) : (
+          <div className="aspect-video w-full bg-black">
+            <iframe src={toEmbed(url)} title={lesson.title} className="w-full h-full" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+          </div>
+        )
+      )}
+      {lesson.embed_html && (
+        <div className="aspect-video w-full bg-black" dangerouslySetInnerHTML={{ __html: lesson.embed_html }} />
+      )}
+      <CardContent className="p-6 md:p-8 space-y-6">
         <div>
-          <h2 className="text-xl font-bold text-primary">{lesson.title}</h2>
-          {lesson.duration_min ? <p className="text-sm text-muted-foreground mt-1">Durasi: {lesson.duration_min} menit</p> : null}
+          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+            {showVideo ? <PlayCircle className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
+            {showVideo ? "Video" : lesson.file_url ? "Dokumen" : "Bacaan"}
+            {lesson.duration_min ? <span>· {lesson.duration_min} menit</span> : null}
+            {done && <span className="inline-flex items-center gap-1 text-emerald-700"><CheckCircle2 className="h-3.5 w-3.5" />Selesai</span>}
+          </div>
+          <h2 className="mt-1.5 text-2xl md:text-[28px] font-bold text-primary leading-tight text-balance">{lesson.title}</h2>
         </div>
 
-        {showVideo && url && (
-          isVideoFile(url) ? (
-            <video src={url} controls className="w-full rounded-md bg-black aspect-video" />
-          ) : (
-            <div className="aspect-video w-full rounded-md overflow-hidden bg-black">
-              <iframe src={toEmbed(url)} className="w-full h-full" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-            </div>
-          )
-        )}
-
-        {lesson.embed_html && (
-          <div className="aspect-video w-full rounded-md overflow-hidden bg-black" dangerouslySetInnerHTML={{ __html: lesson.embed_html }} />
-        )}
-
         {lesson.content_md && (
-          <div className="prose prose-sm max-w-none whitespace-pre-wrap text-foreground">{lesson.content_md}</div>
+          <div className="whitespace-pre-wrap text-[15px] leading-7 text-foreground/90 max-w-3xl">{lesson.content_md}</div>
         )}
 
         {lesson.file_url && !showVideo && (
-          <a href={lesson.file_url} target="_blank" rel="noreferrer">
-            <Button variant="outline"><FileText className="h-4 w-4 mr-2" />Unduh Materi</Button>
+          <a href={lesson.file_url} target="_blank" rel="noreferrer"
+            className="flex items-center gap-3 rounded-xl border p-4 hover:border-primary/40 hover:bg-secondary/40 transition-colors max-w-md">
+            <span className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary"><FileText className="h-5 w-5" /></span>
+            <span className="flex-1 min-w-0">
+              <span className="block text-sm font-semibold">Unduh materi</span>
+              <span className="block text-xs text-muted-foreground truncate">{decodeURIComponent(lesson.file_url.split("/").pop()?.split("?")[0] || "file")}</span>
+            </span>
+            <Download className="h-4 w-4 text-muted-foreground" />
           </a>
         )}
 
         {!showVideo && !lesson.content_md && !lesson.embed_html && !lesson.file_url && (
-          <p className="text-sm text-muted-foreground">Materi belum tersedia.</p>
+          <p className="text-sm text-muted-foreground">Isi pelajaran ini belum tersedia.</p>
         )}
 
-        <div className="pt-4 border-t flex items-center justify-between gap-2 flex-wrap">
+        <div className="pt-5 border-t flex items-center justify-between gap-2 flex-wrap">
           <Button variant="ghost" onClick={onPrev} disabled={!hasPrev}><ArrowLeft className="h-4 w-4 mr-1" />Sebelumnya</Button>
           <div className="flex gap-2">
-            {!done && <Button variant="outline" onClick={onComplete}>Tandai Selesai</Button>}
+            {!done && hasNext && <Button variant="outline" onClick={onComplete}>Tandai selesai</Button>}
             {hasNext ? (
-              <Button variant="gold" onClick={onNext}>{done ? "Lanjut" : "Selesai & Lanjut"}<ArrowRight className="h-4 w-4 ml-1" /></Button>
+              <Button variant="gold" onClick={onNext}>{done ? "Lanjut" : "Selesai & lanjut"}<ArrowRight className="h-4 w-4 ml-1" /></Button>
             ) : (
               <Button variant={done ? "outline" : "gold"} onClick={onComplete} disabled={done}>
-                {done ? <><CheckCircle2 className="h-4 w-4 mr-2" />Selesai</> : "Tandai Selesai"}
+                {done ? <><CheckCircle2 className="h-4 w-4 mr-2" />Selesai</> : "Tandai selesai"}
               </Button>
             )}
           </div>
@@ -490,7 +516,6 @@ const LessonView = ({ lesson, done, onComplete, hasPrev, hasNext, onPrev, onNext
 const QuizView = ({
   quiz,
   prev,
-  userId,
   onSubmitted,
 }: {
   quiz: Quiz;
@@ -511,11 +536,8 @@ const QuizView = ({
   const submit = async () => {
     if (questions.length === 0) return;
     setSubmitting(true);
-    // Scoring happens server-side in the submit-quiz edge function — the
-    // correct answers are never sent to or trusted from the browser.
-    const { data, error } = await supabase.functions.invoke("submit-quiz", {
-      body: { quiz_id: quiz.id, answers },
-    });
+    // Penilaian di server (submit-quiz) — kunci jawaban tidak pernah dikirim ke browser.
+    const { data, error } = await supabase.functions.invoke("submit-quiz", { body: { quiz_id: quiz.id, answers } });
     setSubmitting(false);
     if (error || (data as any)?.error) {
       toast.error((data as any)?.error || error?.message || "Gagal menyimpan kuis");
@@ -525,48 +547,53 @@ const QuizView = ({
     setResult({ score, passed });
     onSubmitted({ score, passed });
     toast[passed ? "success" : "error"](passed ? `Lulus! Skor ${score}` : `Belum lulus. Skor ${score}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const answered = Object.keys(answers).length;
+
   return (
-    <Card>
-      <CardContent className="p-6 space-y-5">
+    <Card className="rounded-2xl shadow-none">
+      <CardContent className="p-6 md:p-8 space-y-6">
         <div>
-          <h2 className="text-xl font-bold text-primary">{quiz.title}</h2>
-          {quiz.description && <p className="text-sm text-muted-foreground mt-1">{quiz.description}</p>}
-          <p className="text-xs text-muted-foreground mt-1">Nilai kelulusan: {quiz.passing_score ?? 70}</p>
+          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+            <FileQuestion className="h-3.5 w-3.5" />Kuis · {questions.length} soal · nilai lulus {quiz.passing_score ?? 70}
+          </div>
+          <h2 className="mt-1.5 text-2xl md:text-[28px] font-bold text-primary leading-tight">{quiz.title}</h2>
+          {quiz.description && <p className="text-sm text-muted-foreground mt-2">{quiz.description}</p>}
         </div>
 
         {result && (
-          <div className={`rounded-md p-3 text-sm ${result.passed ? "bg-green-500/10 text-green-700" : "bg-destructive/10 text-destructive"}`}>
-            Skor terakhir: <strong>{result.score}</strong> — {result.passed ? "Lulus" : "Belum lulus"}
+          <div className={`rounded-xl p-4 text-sm flex items-center gap-3 ${result.passed ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-800 border border-red-200"}`}>
+            <span className="text-2xl font-bold tabular-nums">{result.score}</span>
+            <span>{result.passed ? "Lulus. Anda boleh mengulang untuk memperbaiki nilai." : "Belum lulus. Pelajari lagi materinya lalu coba kembali."}</span>
           </div>
         )}
 
         {questions.length === 0 && <p className="text-sm text-muted-foreground">Soal belum tersedia.</p>}
 
-        <div className="space-y-6">
+        <ol className="space-y-7">
           {questions.map((q, i) => (
-            <div key={i} className="space-y-2">
-              <div className="font-medium">{i + 1}. {q.question}</div>
-              <RadioGroup
-                value={answers[i]?.toString() ?? ""}
-                onValueChange={(v) => setAnswers((a) => ({ ...a, [i]: parseInt(v) }))}
-              >
+            <li key={i} className="space-y-3">
+              <p className="font-medium leading-relaxed"><span className="text-muted-foreground mr-1.5">{i + 1}.</span>{q.question}</p>
+              <RadioGroup value={answers[i]?.toString() ?? ""} onValueChange={(v) => setAnswers((a) => ({ ...a, [i]: parseInt(v) }))} className="gap-2">
                 {(q.options || []).map((opt: string, oi: number) => (
-                  <div key={oi} className="flex items-center space-x-2">
+                  <Label key={oi} htmlFor={`q${i}-o${oi}`}
+                    className={`flex items-center gap-3 rounded-lg border px-4 py-3 font-normal cursor-pointer transition-colors ${answers[i] === oi ? "border-primary bg-primary/5" : "hover:bg-secondary/60"}`}>
                     <RadioGroupItem value={oi.toString()} id={`q${i}-o${oi}`} />
-                    <Label htmlFor={`q${i}-o${oi}`} className="font-normal cursor-pointer">{opt}</Label>
-                  </div>
+                    <span className="leading-snug">{opt}</span>
+                  </Label>
                 ))}
               </RadioGroup>
-            </div>
+            </li>
           ))}
-        </div>
+        </ol>
 
         {questions.length > 0 && (
-          <div className="pt-2 border-t flex justify-end">
-            <Button variant="gold" onClick={submit} disabled={submitting || Object.keys(answers).length !== questions.length}>
-              {submitting ? "Mengirim..." : "Kirim Jawaban"}
+          <div className="pt-5 border-t flex items-center justify-between gap-3 flex-wrap">
+            <span className="text-sm text-muted-foreground">{answered} dari {questions.length} soal dijawab</span>
+            <Button variant="gold" onClick={submit} disabled={submitting || answered !== questions.length}>
+              {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Mengirim…</> : "Kirim jawaban"}
             </Button>
           </div>
         )}

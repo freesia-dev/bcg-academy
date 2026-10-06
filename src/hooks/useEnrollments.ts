@@ -14,6 +14,8 @@ export interface Enrollment {
   payment_amount: number | null;
   completed_at: string | null;
   certificate_url: string | null;
+  certificate_number?: string | null;
+  certificate_issued_at?: string | null;
   notes: string | null;
 }
 

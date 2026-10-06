@@ -62,7 +62,7 @@ export const formatDateRange = (start?: string | null, end?: string | null) => {
   return `${formatDate(start)} – ${formatDate(end)}`;
 };
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 
 export interface BatchAvailability { open: boolean; left: number | null; reason?: string }
 

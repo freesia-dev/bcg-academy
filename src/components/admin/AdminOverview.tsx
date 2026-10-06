@@ -12,7 +12,7 @@ import type { RegistrantFilter } from "./RegistrantsAdmin";
 import { cn } from "@/lib/utils";
 
 export type AdminSection =
-  | "ringkasan" | "pendaftar" | "program" | "angkatan" | "peserta" | "laporan" | "sertifikat" | "rekening" | "galeri" | "roles";
+  | "ringkasan" | "pendaftar" | "program" | "angkatan" | "kelas" | "peserta" | "laporan" | "sertifikat" | "rekening" | "galeri" | "roles";
 
 interface Props { onGo: (section: AdminSection, filter?: RegistrantFilter) => void }
 

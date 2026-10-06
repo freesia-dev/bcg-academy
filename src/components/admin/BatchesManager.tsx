@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { CalendarDays, Copy, Loader2, MapPin, Pencil, Plus, Trash2, Users } from "lucide-react";
+import { CalendarDays, ClipboardCheck, Copy, Loader2, MapPin, Pencil, Plus, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -149,6 +149,11 @@ const BatchesManager = ({ courseId, coursePrice }: Props) => {
                   {taken > 0 && (
                     <Button size="sm" variant="ghost" asChild>
                       <Link to={`/admin?menu=pendaftar&filter=all&batch=${b.id}`}><Users className="h-4 w-4 mr-1" />Pendaftar</Link>
+                    </Button>
+                  )}
+                  {(b.status === "running" || b.status === "closed" || b.status === "finished" || taken > 0) && (
+                    <Button size="sm" variant="ghost" asChild>
+                      <Link to={`/admin?menu=kelas&batch=${b.id}`}><ClipboardCheck className="h-4 w-4 mr-1" />Absensi</Link>
                     </Button>
                   )}
                   <Button size="sm" variant="ghost" className="text-destructive ml-auto" onClick={() => remove(b)}><Trash2 className="h-4 w-4" /></Button>
