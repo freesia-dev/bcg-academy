@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { STATUS_LABEL } from "@/lib/adminData";
 import { Loader2, Download, TrendingUp, CheckCircle2, Clock, XCircle } from "lucide-react";
 
 type Pay = {
@@ -63,7 +64,7 @@ const ReportsAdmin = () => {
       r.course?.title || "-",
       r.payment_method || "-",
       r.payment_amount || 0,
-      r.status,
+      STATUS_LABEL[r.status] || r.status,
     ]);
     const csv = [header, ...lines].map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
@@ -118,7 +119,7 @@ const ReportsAdmin = () => {
                     <td className="py-2 pr-3">{r.course?.title || "-"}</td>
                     <td className="py-2 pr-3 text-xs">{r.payment_method || "-"}</td>
                     <td className="py-2 pr-3 text-right font-semibold">{formatRp(r.payment_amount || 0)}</td>
-                    <td className="py-2 pr-3"><Badge variant={r.status === "active" || r.status === "completed" ? "default" : r.status === "rejected" ? "destructive" : "secondary"} className={r.status === "active" || r.status === "completed" ? "bg-gold text-primary" : ""}>{r.status}</Badge></td>
+                    <td className="py-2 pr-3"><Badge variant={r.status === "active" || r.status === "completed" ? "default" : r.status === "rejected" ? "destructive" : "secondary"} className={r.status === "active" || r.status === "completed" ? "bg-gold text-primary" : ""}>{STATUS_LABEL[r.status] || r.status}</Badge></td>
                   </tr>
                 ))}
                 {filtered.length === 0 && <tr><td colSpan={6} className="py-8 text-center text-muted-foreground">Tidak ada transaksi pada periode ini.</td></tr>}

@@ -9,16 +9,25 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Pencil, ArrowLeft, Loader2, FileText, PlayCircle, FileQuestion, GripVertical, ArrowUp, ArrowDown, Upload, FolderOpen, Lock } from "lucide-react";
+import { Plus, Trash2, Pencil, ArrowLeft, Loader2, FileText, PlayCircle, FileQuestion, GripVertical, ArrowUp, ArrowDown, Upload, FolderOpen, Lock, Eye } from "lucide-react";
 import { MediaPicker } from "./MediaPicker";
 import { importStructureCSV, importQuizzesCSV, type ImportResult } from "@/lib/csvImport";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ImageField } from "./config/SchemaForm";
+import BatchesManager from "./BatchesManager";
+import ProgramVisual from "@/components/site/ProgramVisual";
+import { fetchBatches } from "@/lib/batches";
+import { cn } from "@/lib/utils";
+
+const lines = (v?: string[] | null) => (v || []).join("\n");
+const toLines = (s: string) => s.split("\n").map((x) => x.trim()).filter(Boolean);
 
 type Course = {
   id: string; slug: string; title: string; description: string | null; cover_image: string | null;
   type: string; category: string | null; level: string | null; duration: string | null; capacity: string | null;
   instructor_name: string | null; price: number; is_free: boolean; currency: string;
   is_published: boolean; sort_order: number;
+  highlights?: string[]; requirements?: string[]; faq?: { q: string; a: string }[];
 };
 type Module = { id: string; course_id: string; title: string; description: string | null; sort_order: number; prerequisite_module_id: string | null };
 type Lesson = {
@@ -41,10 +50,21 @@ const CoursesAdmin = () => {
   const [editing, setEditing] = useState<Course | null>(null);
   const [importOpen, setImportOpen] = useState(false);
 
+  const [stats, setStats] = useState<Record<string, { open: number; batches: number; registrants: number }>>({});
+
   const loadCourses = async () => {
     setLoading(true);
-    const { data } = await supabase.from("courses").select("*").order("sort_order").order("title");
+    const [{ data }, bs, { data: en }] = await Promise.all([
+      supabase.from("courses").select("*").order("sort_order").order("title"),
+      fetchBatches(undefined, true),
+      supabase.from("enrollments").select("course_id,status"),
+    ]);
     setCourses((data as Course[]) || []);
+    const st: Record<string, { open: number; batches: number; registrants: number }> = {};
+    const get = (id: string) => (st[id] ||= { open: 0, batches: 0, registrants: 0 });
+    bs.forEach((b) => { const x = get(b.course_id); x.batches++; if (b.status === "open") x.open++; });
+    ((en as { course_id: string; status: string }[]) || []).forEach((e) => { if (e.status !== "cancelled") get(e.course_id).registrants++; });
+    setStats(st);
     setLoading(false);
   };
   useEffect(() => { loadCourses(); }, []);
@@ -52,57 +72,76 @@ const CoursesAdmin = () => {
   if (editing) return <CourseEditor course={editing} onBack={() => { setEditing(null); loadCourses(); }} />;
 
   const newCourse = () => setEditing({
-    id: "", slug: "", title: "Kursus Baru", description: "", cover_image: "",
-    type: "online", category: "", level: "Pemula", duration: "", capacity: "",
-    instructor_name: "", price: 0, is_free: true, currency: "IDR",
-    is_published: false, sort_order: 0,
+    id: "", slug: "", title: "Program Baru", description: "", cover_image: "",
+    type: "offline", category: "", level: "Pemula", duration: "", capacity: "",
+    instructor_name: "", price: 0, is_free: false, currency: "IDR",
+    is_published: false, sort_order: 0, highlights: [], requirements: [], faq: [],
   });
 
   const deleteCourse = async (c: Course) => {
-    if (!confirm(`Hapus kursus "${c.title}" beserta seluruh modul, pelajaran, dan kuis?`)) return;
+    if (!confirm(`Hapus program "${c.title}" beserta angkatan, modul, pelajaran, dan kuis? Data pendaftar tetap tersimpan tetapi kehilangan programnya.`)) return;
     const { error } = await supabase.from("courses").delete().eq("id", c.id);
     if (error) return toast({ title: "Gagal hapus", description: error.message, variant: "destructive" });
-    toast({ title: "Kursus dihapus" });
+    toast({ title: "Program dihapus" });
     loadCourses();
   };
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center flex-wrap gap-2">
-        <h3 className="text-lg font-semibold">Daftar Kursus</h3>
+        <p className="text-sm text-muted-foreground">{courses.length} program · {courses.filter((c) => c.is_published).length} terbit</p>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="h-4 w-4 mr-1" />Import CSV</Button>
-          <Button variant="gold" onClick={newCourse}><Plus className="h-4 w-4 mr-1" />Tambah Kursus</Button>
+          <Button variant="gold" onClick={newCourse}><Plus className="h-4 w-4 mr-1" />Tambah Program</Button>
         </div>
       </div>
       <CSVImportDialog open={importOpen} onClose={() => setImportOpen(false)} onDone={loadCourses} />
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
       ) : courses.length === 0 ? (
-        <Card><CardContent className="p-10 text-center text-muted-foreground">Belum ada kursus. Klik "Tambah Kursus".</CardContent></Card>
+        <Card><CardContent className="p-10 text-center text-muted-foreground">Belum ada program. Klik "Tambah Program".</CardContent></Card>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {courses.map((c) => (
-            <Card key={c.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4 space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-bold line-clamp-1">{c.title}</h4>
-                    <p className="text-xs text-muted-foreground line-clamp-2">{c.description}</p>
+        <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          {courses.map((c) => {
+            const st = stats[c.id] || { open: 0, batches: 0, registrants: 0 };
+            const noPrice = !c.is_free && !(c.price > 0);
+            return (
+              <Card key={c.id} className="overflow-hidden shadow-none hover:shadow-md transition-shadow flex flex-col">
+                <button type="button" onClick={() => setEditing(c)} className="relative aspect-[16/7] text-left" aria-label={`Edit ${c.title}`}>
+                  <ProgramVisual title={c.title} category={c.category} image={c.cover_image} />
+                  <span className="absolute top-2 left-2 flex gap-1">
+                    {c.is_published
+                      ? <Badge className="text-[11px] bg-emerald-600 hover:bg-emerald-600">Terbit</Badge>
+                      : <Badge variant="secondary" className="text-[11px]">Draf</Badge>}
+                    <Badge variant="secondary" className="text-[11px] bg-white/90 text-primary">{c.type === "online" ? "Online" : "Tatap muka"}</Badge>
+                  </span>
+                </button>
+                <CardContent className="p-4 flex-1 flex flex-col gap-3">
+                  <div className="min-w-0">
+                    <h4 className="font-semibold leading-snug line-clamp-2">{c.title}</h4>
+                    <p className={cn("text-sm mt-1 font-medium", noPrice ? "text-destructive" : "text-foreground")}>
+                      {c.is_free ? "Gratis" : c.price > 0 ? `Rp ${c.price.toLocaleString("id-ID")}` : "Biaya belum diisi"}
+                    </p>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <Button size="icon" variant="outline" onClick={() => setEditing(c)}><Pencil className="h-4 w-4" /></Button>
-                    <Button size="icon" variant="outline" onClick={() => deleteCourse(c)}><Trash2 className="h-4 w-4" /></Button>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="rounded-md bg-muted/60 px-2.5 py-1.5">
+                      <div className="text-muted-foreground">Angkatan</div>
+                      <div className="font-semibold">{c.type === "online" ? "—" : st.open ? `${st.open} dibuka` : st.batches ? `${st.batches} (tutup)` : "Belum ada"}</div>
+                    </div>
+                    <div className="rounded-md bg-muted/60 px-2.5 py-1.5">
+                      <div className="text-muted-foreground">Pendaftar</div>
+                      <div className="font-semibold">{st.registrants}</div>
+                    </div>
                   </div>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  <Badge variant="outline" className="text-xs">{c.type}</Badge>
-                  {c.is_free ? <Badge className="text-xs bg-green-600">Gratis</Badge> : <Badge className="text-xs bg-gold text-primary">Rp {c.price.toLocaleString("id-ID")}</Badge>}
-                  {c.is_published ? <Badge className="text-xs">Terbit</Badge> : <Badge variant="secondary" className="text-xs">Draft</Badge>}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  <div className="mt-auto flex gap-2">
+                    <Button size="sm" variant="outline" className="flex-1" onClick={() => setEditing(c)}><Pencil className="h-4 w-4 mr-1.5" />Kelola</Button>
+                    <Button size="sm" variant="ghost" asChild><a href={`/kursus/${c.slug}`} target="_blank" rel="noreferrer" aria-label="Lihat di situs"><Eye className="h-4 w-4" /></a></Button>
+                    <Button size="sm" variant="ghost" aria-label="Hapus program" onClick={() => deleteCourse(c)}><Trash2 className="h-4 w-4" /></Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
@@ -137,12 +176,15 @@ const CourseEditor = ({ course, onBack }: { course: Course; onBack: () => void }
       instructor_name: c.instructor_name || null,
       price: c.is_free ? 0 : (c.price || 0), is_free: c.is_free, currency: c.currency || "IDR",
       is_published: c.is_published, sort_order: c.sort_order || 0,
+      highlights: (c.highlights || []).filter(Boolean),
+      requirements: (c.requirements || []).filter(Boolean),
+      faq: (c.faq || []).filter((f) => f.q?.trim() && f.a?.trim()),
     };
     if (isNew) {
       const { data, error } = await supabase.from("courses").insert(payload).select().single();
       setSaving(false);
       if (error) return toast({ title: "Gagal", description: error.message, variant: "destructive" });
-      toast({ title: "Kursus dibuat" });
+      toast({ title: "Program dibuat", description: "Sekarang Anda bisa menambah angkatan dan materi." });
       setC(data as Course);
     } else {
       const { error } = await supabase.from("courses").update(payload).eq("id", c.id);
@@ -163,10 +205,10 @@ const CourseEditor = ({ course, onBack }: { course: Course; onBack: () => void }
 
   return (
     <div className="space-y-4">
-      <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="h-4 w-4 mr-1" />Kembali ke daftar kursus</Button>
+      <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="h-4 w-4 mr-1" />Kembali ke daftar program</Button>
 
       <Card>
-        <CardHeader><CardTitle>{isNew ? "Kursus Baru" : "Edit Kursus"}</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{isNew ? "Program Baru" : "Edit Program"}</CardTitle></CardHeader>
         <CardContent className="space-y-3">
           <div className="grid md:grid-cols-2 gap-3">
             <div><Label>Judul</Label><Input value={c.title} onChange={(e) => setC({ ...c, title: e.target.value })} /></div>
@@ -176,8 +218,8 @@ const CourseEditor = ({ course, onBack }: { course: Course; onBack: () => void }
           <div className="grid md:grid-cols-3 gap-3">
             <div><Label>Tipe</Label>
               <select className="w-full p-2 border rounded-md bg-background" value={c.type} onChange={(e) => setC({ ...c, type: e.target.value })}>
-                <option value="online">Online</option>
-                <option value="offline">Offline</option>
+                <option value="offline">Tatap muka (pakai angkatan)</option>
+                <option value="online">Online (materi LMS)</option>
               </select>
             </div>
             <div><Label>Kategori</Label><Input value={c.category || ""} onChange={(e) => setC({ ...c, category: e.target.value })} /></div>
@@ -191,7 +233,7 @@ const CourseEditor = ({ course, onBack }: { course: Course; onBack: () => void }
           <div className="grid md:grid-cols-3 gap-3 items-end">
             <div className="flex items-center gap-2 pt-6">
               <input type="checkbox" id="free" checked={c.is_free} onChange={(e) => setC({ ...c, is_free: e.target.checked })} />
-              <Label htmlFor="free">Gratis</Label>
+              <Label htmlFor="free">Gratis / subsidi</Label>
             </div>
             <div>
               <Label>Harga (Rp)</Label>
@@ -199,21 +241,51 @@ const CourseEditor = ({ course, onBack }: { course: Course; onBack: () => void }
             </div>
             <div><Label>Urutan</Label><Input type="number" value={c.sort_order} onChange={(e) => setC({ ...c, sort_order: parseInt(e.target.value) || 0 })} /></div>
           </div>
-          <div><Label>URL Gambar Cover</Label><Input value={c.cover_image || ""} onChange={(e) => setC({ ...c, cover_image: e.target.value })} placeholder="https://..." /></div>
+          <div><Label>Foto cover (rasio 16:10)</Label><ImageField value={c.cover_image || ""} onChange={(v) => setC({ ...c, cover_image: v })} /></div>
+          <div className="grid md:grid-cols-2 gap-3">
+            <div>
+              <Label>Yang akan dipelajari (satu per baris)</Label>
+              <Textarea rows={5} value={lines(c.highlights)} onChange={(e) => setC({ ...c, highlights: e.target.value.split("\n") })} onBlur={(e) => setC({ ...c, highlights: toLines(e.target.value) })} placeholder={"Teknik dasar ...\nPraktik ..."} />
+            </div>
+            <div>
+              <Label>Syarat peserta (satu per baris)</Label>
+              <Textarea rows={5} value={lines(c.requirements)} onChange={(e) => setC({ ...c, requirements: e.target.value.split("\n") })} onBlur={(e) => setC({ ...c, requirements: toLines(e.target.value) })} placeholder={"Usia minimal 17 tahun\nFotokopi KTP"} />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>FAQ khusus program ini (opsional — bila kosong, FAQ umum situs yang tampil)</Label>
+            {(c.faq || []).map((f, i) => (
+              <div key={i} className="grid gap-2 rounded-lg border p-3">
+                <div className="flex gap-2">
+                  <Input placeholder="Pertanyaan" value={f.q} onChange={(e) => setC({ ...c, faq: (c.faq || []).map((x, k) => k === i ? { ...x, q: e.target.value } : x) })} />
+                  <Button type="button" variant="ghost" size="icon" onClick={() => setC({ ...c, faq: (c.faq || []).filter((_, k) => k !== i) })}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+                <Textarea rows={2} placeholder="Jawaban" value={f.a} onChange={(e) => setC({ ...c, faq: (c.faq || []).map((x, k) => k === i ? { ...x, a: e.target.value } : x) })} />
+              </div>
+            ))}
+            <Button type="button" variant="outline" size="sm" onClick={() => setC({ ...c, faq: [...(c.faq || []), { q: "", a: "" }] })}><Plus className="h-4 w-4 mr-1" />Tambah pertanyaan</Button>
+          </div>
           <div className="flex items-center gap-2">
             <input type="checkbox" id="pub" checked={c.is_published} onChange={(e) => setC({ ...c, is_published: e.target.checked })} />
             <Label htmlFor="pub">Terbitkan (tampil di katalog)</Label>
           </div>
           <Button variant="gold" onClick={saveCourse} disabled={saving}>
-            {saving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Simpan Kursus
+            {saving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Simpan Program
           </Button>
         </CardContent>
       </Card>
 
       {!isNew && (
         <Card>
+          <CardHeader><CardTitle>Angkatan & jadwal</CardTitle></CardHeader>
+          <CardContent><BatchesManager courseId={c.id} coursePrice={c.is_free ? 0 : c.price} /></CardContent>
+        </Card>
+      )}
+
+      {!isNew && (
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Modul, Pelajaran & Kuis</CardTitle>
+            <CardTitle>Materi online (modul, pelajaran & kuis)</CardTitle>
             <Button variant="gold" size="sm" onClick={addModule}><Plus className="h-4 w-4 mr-1" />Tambah Modul</Button>
           </CardHeader>
           <CardContent>

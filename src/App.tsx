@@ -11,6 +11,7 @@ import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
 import VerifyCertificate from "./pages/VerifyCertificate";
+import Register from "./pages/Register";
 import SiteConfigAdmin from "./pages/SiteConfigAdmin";
 import { SiteConfigProvider } from "./hooks/useSiteConfig";
 import CoursesPage from "./pages/CoursesPage";
@@ -47,6 +48,7 @@ const App = () => (
           <Route path="/verifikasi" element={<VerifyCertificate />} />
           <Route path="/verifikasi/:code" element={<VerifyCertificate />} />
           <Route path="/kursus/:slug" element={<CourseDetail />} />
+          <Route path="/daftar/:slug" element={<Register />} />
           <Route path="/kursus-saya" element={<ProtectedRoute><MyCourses /></ProtectedRoute>} />
           <Route path="/learn/:slug" element={<ProtectedRoute><Learn /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />

@@ -4,7 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 export interface Enrollment {
   id: string;
   course_id: string;
-  status: "pending_payment" | "active" | "completed" | "cancelled" | "rejected";
+  status: "pending_payment" | "active" | "completed" | "cancelled" | "rejected" | "waitlist";
+  batch_id?: string | null;
+  payment_method?: string | null;
+  participant_note?: string | null;
+  paid_at?: string | null;
   enrolled_at: string;
   payment_proof_url: string | null;
   payment_amount: number | null;
@@ -24,9 +28,9 @@ export const useMyEnrollments = (userId: string | undefined) => {
       return;
     }
     setLoading(true);
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("enrollments")
-      .select("*, course:courses(id,slug,title,cover_image,type,duration,instructor_name)")
+      .select("*, course:courses(id,slug,title,cover_image,type,category,duration,instructor_name), batch:batches(id,name,start_date,end_date,schedule,location,status,notes)")
       .eq("user_id", userId)
       .order("enrolled_at", { ascending: false });
     setEnrollments((data as any) || []);

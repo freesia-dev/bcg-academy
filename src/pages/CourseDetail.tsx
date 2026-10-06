@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  Award, BarChart3, CheckCircle2, Clock, FileText, GraduationCap, Loader2, Lock, MapPin, MessageCircle,
+  Award, BarChart3, CalendarDays, CheckCircle2, ClipboardList, Clock, FileText, GraduationCap, Hourglass, Lock, MapPin, MessageCircle,
   MonitorPlay, PlayCircle, ShieldCheck, Users,
 } from "lucide-react";
 import Header from "@/components/Header";
@@ -14,23 +14,24 @@ import { useCourse } from "@/hooks/useCourses";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyEnrollment } from "@/hooks/useEnrollments";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import CheckoutDialog from "@/components/CheckoutDialog";
-import ProgramRegistrationDialog from "@/components/ProgramRegistrationDialog";
 import NotFound from "./NotFound";
+import { availability, fetchBatches, fetchSeats, formatDate, formatDateRange, priceFor, rupiah, type Batch } from "@/lib/batches";
 
 const CourseDetail = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { brand, sections } = useSiteConfig();
   const { course, modules, loading } = useCourse(slug);
   const { user } = useAuth();
-  const { enrollment, refetch } = useMyEnrollment(user?.id, course?.id);
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [formOpen, setFormOpen] = useState(false);
-  const [enrolling, setEnrolling] = useState(false);
+  const { enrollment } = useMyEnrollment(user?.id, course?.id);
+  const [batches, setBatches] = useState<Batch[]>([]);
+  const [seats, setSeats] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!course) return;
+    Promise.all([fetchBatches(course.id), fetchSeats(course.id)]).then(([b, s2]) => { setBatches(b); setSeats(s2); });
+  }, [course]);
+  const openBatches = useMemo(() => batches.filter((b) => availability(b, seats[b.id]).open), [batches, seats]);
 
   if (loading) {
     return (
@@ -51,20 +52,16 @@ const CourseDetail = () => {
   const isActive = enrollment?.status === "active" || enrollment?.status === "completed";
   const isPending = enrollment?.status === "pending_payment";
   const isRejected = enrollment?.status === "rejected";
-  const waText = encodeURIComponent(`Halo ${brand.name}, saya ingin mendaftar program "${course.title}". Mohon info jadwal dan biayanya.`);
+  const waText = encodeURIComponent(`Halo ${brand.name}, saya ingin bertanya tentang program "${course.title}".`);
   const waLink = `https://wa.me/${brand.whatsapp}?text=${waText}`;
   const highlights = (course.highlights || []).filter(Boolean);
+  const courseFaq = ((course as any).faq || []) as { q: string; a: string }[];
+  const faqItems = courseFaq.length ? courseFaq : sections.faq.items.slice(0, 4);
   const lessonCount = modules.reduce((n, m: any) => n + (m.lessons?.length || 0), 0);
 
-  const enrollFree = async () => {
-    if (!user) return navigate(`/auth?redirect=/kursus/${slug}`);
-    setEnrolling(true);
-    const { error } = await (supabase as any).rpc("enroll_in_course", { _course_id: course.id });
-    setEnrolling(false);
-    if (error) return toast({ title: "Gagal mendaftar", description: error.message, variant: "destructive" });
-    toast({ title: "Berhasil mendaftar!", description: "Anda bisa langsung mulai belajar." });
-    refetch();
-  };
+  const isWaitlist = (enrollment?.status as string) === "waitlist";
+  const nextBatch = openBatches[0];
+  const shownPrice = priceFor(course, nextBatch || null);
 
   /** Tombol utama sesuai status peserta & jenis program. */
   const primaryAction = (block = true) => {
@@ -72,14 +69,14 @@ const CourseDetail = () => {
     if (isActive) {
       return online
         ? <Button size="lg" className={cls} onClick={() => navigate(`/learn/${slug}`)}><PlayCircle className="h-4 w-4" />Buka kelas</Button>
-        : <Button size="lg" className={cls} onClick={() => navigate("/kursus-saya")}>Lihat di Dashboard</Button>;
+        : <Button size="lg" className={cls} onClick={() => navigate("/kursus-saya")}>Lihat jadwal di Dashboard</Button>;
     }
-    if (isPending) return <Button size="lg" variant="outline" className={cls} onClick={() => navigate("/kursus-saya")}><Loader2 className="h-4 w-4 animate-spin" />Menunggu verifikasi</Button>;
-    if (isRejected) return <Button size="lg" variant="gold" className={cls} onClick={() => setCheckoutOpen(true)}>Kirim ulang bukti bayar</Button>;
-    if (!online) return <Button asChild size="lg" variant="gold" className={cls}><a href={waLink} target="_blank" rel="noreferrer"><MessageCircle className="h-4 w-4" />Daftar via WhatsApp</a></Button>;
-    if (!user) return <Button size="lg" variant="gold" className={cls} onClick={() => navigate(`/auth?redirect=/kursus/${slug}`)}>Daftar sekarang</Button>;
-    if (isFree) return <Button size="lg" variant="gold" className={cls} onClick={enrollFree} disabled={enrolling}>{enrolling && <Loader2 className="h-4 w-4 animate-spin" />}Daftar gratis</Button>;
-    return <Button size="lg" variant="gold" className={cls} onClick={() => setCheckoutOpen(true)}>Daftar — {formatPrice(course)}</Button>;
+    if (isPending || isRejected || isWaitlist) {
+      return <Button size="lg" variant={isRejected ? "gold" : "outline"} className={cls} onClick={() => navigate("/kursus-saya")}>
+        {isRejected ? "Perbaiki pembayaran" : isWaitlist ? "Anda di daftar minat" : "Lihat status pendaftaran"}
+      </Button>;
+    }
+    return <Button asChild size="lg" variant="gold" className={cls}><Link to={`/daftar/${slug}`}>{!online && openBatches.length === 0 ? "Daftar minat" : "Daftar sekarang"}</Link></Button>;
   };
 
   const facts = [
@@ -118,7 +115,7 @@ const CourseDetail = () => {
               ))}
               <div className="flex items-center gap-2 text-sm lg:hidden">
                 <dt className="text-muted-foreground">Biaya:</dt>
-                <dd className="font-bold text-primary">{formatPrice(course)}</dd>
+                <dd className="font-bold text-primary">{rupiah(shownPrice)}</dd>
               </div>
             </dl>
           </div>
@@ -132,6 +129,61 @@ const CourseDetail = () => {
               <div className={`${course.cover_image ? "aspect-[16/9]" : "aspect-[21/8]"} overflow-hidden rounded-2xl`}>
                 <ProgramVisual title={course.title} category={course.category} image={course.cover_image} size="lg" />
               </div>
+
+              {!online && (
+                <section aria-labelledby="jadwal">
+                  <h2 id="jadwal" className="text-2xl font-bold text-primary mb-4">Jadwal angkatan</h2>
+                  {batches.length === 0 ? (
+                    <div className="flex gap-4 rounded-2xl border border-dashed border-border bg-card p-6">
+                      <Hourglass className="h-6 w-6 shrink-0 text-gold-dark" />
+                      <div className="text-[15px]">
+                        <p className="font-semibold text-primary">Jadwal angkatan berikutnya segera diumumkan</p>
+                        <p className="mt-1 text-muted-foreground">Daftar minat sekarang, dan kami kabari lewat WhatsApp begitu jadwal dibuka.</p>
+                        <Button asChild size="sm" variant="outline" className="mt-3"><Link to={`/daftar/${slug}`}>Daftar minat</Link></Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {batches.map((b) => {
+                        const av = availability(b, seats[b.id]);
+                        return (
+                          <div key={b.id} className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 sm:flex-row sm:items-center">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="font-bold text-primary">{b.name}</span>
+                                {av.open
+                                  ? <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${av.left !== null && av.left <= 5 ? "bg-amber-100 text-amber-800" : "bg-green-100 text-green-800"}`}>{av.left === null ? "Dibuka" : `Sisa ${av.left} kursi`}</span>
+                                  : <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">{av.reason}</span>}
+                              </div>
+                              <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground">
+                                <span className="flex items-center gap-1.5"><CalendarDays className="h-4 w-4" />{formatDateRange(b.start_date, b.end_date)}</span>
+                                {b.schedule && <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" />{b.schedule}</span>}
+                                {b.location && <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" />{b.location}</span>}
+                              </div>
+                              {b.registration_deadline && av.open && <p className="mt-1 text-xs text-muted-foreground">Pendaftaran ditutup {formatDate(b.registration_deadline)}</p>}
+                            </div>
+                            <div className="flex items-center gap-4 sm:flex-col sm:items-end sm:gap-2">
+                              <span className="font-bold text-primary">{rupiah(priceFor(course, b))}</span>
+                              {av.open && !isActive && !isPending && <Button asChild size="sm"><Link to={`/daftar/${slug}?batch=${b.id}`}>Pilih angkatan ini</Link></Button>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </section>
+              )}
+
+              {(course as any).requirements?.length > 0 && (
+                <section aria-labelledby="syarat">
+                  <h2 id="syarat" className="text-2xl font-bold text-primary mb-4">Syarat peserta</h2>
+                  <ul className="space-y-2.5 rounded-2xl border border-border bg-card p-6">
+                    {(course as any).requirements.map((r: string, i: number) => (
+                      <li key={i} className="flex gap-3 text-[15px]"><ClipboardList className="h-5 w-5 shrink-0 text-gold-dark" />{r}</li>
+                    ))}
+                  </ul>
+                </section>
+              )}
 
               {highlights.length > 0 && (
                 <section aria-labelledby="learn">
@@ -205,11 +257,11 @@ const CourseDetail = () => {
                 </div>
               </section>
 
-              {sections.faq.items.length > 0 && (
+              {faqItems.length > 0 && (
                 <section aria-labelledby="faq-program">
                   <h2 id="faq-program" className="text-2xl font-bold text-primary mb-4">Pertanyaan umum</h2>
                   <Accordion type="single" collapsible className="rounded-2xl border border-border bg-card px-5">
-                    {sections.faq.items.slice(0, 4).map((f, i, arr) => (
+                    {faqItems.map((f, i, arr) => (
                       <AccordionItem key={i} value={`f${i}`} className={i === arr.length - 1 ? "border-b-0" : ""}>
                         <AccordionTrigger className="text-left font-semibold text-primary hover:no-underline">{f.q}</AccordionTrigger>
                         <AccordionContent className="text-[15px] leading-relaxed text-muted-foreground">{f.a}</AccordionContent>
@@ -223,7 +275,13 @@ const CourseDetail = () => {
             <aside className="lg:sticky lg:top-24 h-fit space-y-4">
               <div className="rounded-2xl border border-border bg-card p-6 shadow-medium">
                 <p className="text-sm text-muted-foreground">Biaya pelatihan</p>
-                <p className="mt-1 text-3xl font-extrabold text-primary" style={{ fontFamily: "var(--font-heading)" }}>{formatPrice(course)}</p>
+                <p className="mt-1 text-3xl font-extrabold text-primary" style={{ fontFamily: "var(--font-heading)" }}>{rupiah(shownPrice)}</p>
+                {!online && nextBatch && (
+                  <div className="mt-4 rounded-lg bg-secondary/70 p-3 text-sm">
+                    <p className="font-semibold text-primary">Angkatan terdekat: {nextBatch.name}</p>
+                    <p className="text-muted-foreground">{formatDateRange(nextBatch.start_date, nextBatch.end_date)}{availability(nextBatch, seats[nextBatch.id]).left !== null && ` · sisa ${availability(nextBatch, seats[nextBatch.id]).left} kursi`}</p>
+                  </div>
+                )}
 
                 {isRejected && (
                   <div className="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
@@ -231,16 +289,12 @@ const CourseDetail = () => {
                     {enrollment?.notes && <p className="mt-0.5 text-muted-foreground">Alasan: {enrollment.notes}</p>}
                   </div>
                 )}
-                {isPending && <p className="mt-4 rounded-lg bg-secondary p-3 text-sm text-primary">Bukti pembayaran Anda sedang diverifikasi admin (maks. 1×24 jam).</p>}
+                {isPending && <p className="mt-4 rounded-lg bg-secondary p-3 text-sm text-primary">Pendaftaran Anda tercatat. Status pembayaran bisa dipantau di Dashboard Saya.</p>}
+                {isWaitlist && <p className="mt-4 rounded-lg bg-secondary p-3 text-sm text-primary">Anda ada di daftar minat. Kami kabari saat jadwal angkatan dibuka.</p>}
 
                 <div className="mt-5 space-y-2">
                   {primaryAction()}
-                  {!online && !isActive && !isPending && (
-                    <Button variant="outline" size="lg" className="w-full" onClick={() => setFormOpen(true)}>Isi formulir pendaftaran</Button>
-                  )}
-                  {online && (
-                    <Button asChild variant="outline" size="lg" className="w-full"><a href={waLink} target="_blank" rel="noreferrer"><MessageCircle className="h-4 w-4" />Tanya via WhatsApp</a></Button>
-                  )}
+                  <Button asChild variant="outline" size="lg" className="w-full"><a href={waLink} target="_blank" rel="noreferrer"><MessageCircle className="h-4 w-4" />Tanya via WhatsApp</a></Button>
                 </div>
 
                 <ul className="mt-6 space-y-3 border-t border-border pt-5 text-sm">
@@ -269,11 +323,6 @@ const CourseDetail = () => {
 
       <Footer mobileBar={<div className="flex flex-1">{primaryAction(false)}</div>} />
 
-      {user && (
-        <CheckoutDialog open={checkoutOpen} onOpenChange={setCheckoutOpen}
-          course={{ id: course.id, title: course.title, price: course.price }} userId={user.id} onSuccess={refetch} />
-      )}
-      <ProgramRegistrationDialog open={formOpen} onOpenChange={setFormOpen} programTitle={course.title} />
     </div>
   );
 };

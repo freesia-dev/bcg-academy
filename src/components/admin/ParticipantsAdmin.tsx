@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
+import { STATUS_LABEL } from "@/lib/adminData";
 import { Loader2, Download, Search } from "lucide-react";
 
 type Row = {
@@ -117,7 +118,7 @@ const ParticipantsAdmin = () => {
   const exportCsv = () => {
     const header = ["Nama", "WhatsApp", "Kursus", "Status", "Progress %", "Pelajaran", "Kuis Lulus", "Terdaftar", "Selesai"];
     const lines = filtered.map((r) => [
-      r.full_name, r.phone, r.course_title, r.status, r.progress_pct,
+      r.full_name, r.phone, r.course_title, STATUS_LABEL[r.status] || r.status, r.progress_pct,
       `${r.done_lessons}/${r.total_lessons}`, `${r.passed_quizzes}/${r.total_quizzes}`,
       new Date(r.enrolled_at).toLocaleString("id-ID"),
       r.completed_at ? new Date(r.completed_at).toLocaleString("id-ID") : "",
@@ -160,7 +161,7 @@ const ParticipantsAdmin = () => {
                     <div className="text-xs text-muted-foreground">{r.phone}</div>
                   </td>
                   <td className="py-2 pr-3">{r.course_title}</td>
-                  <td className="py-2 pr-3"><Badge variant={r.status === "completed" ? "default" : r.status === "active" ? "secondary" : "outline"} className={r.status === "completed" ? "bg-gold text-primary" : ""}>{r.status}</Badge></td>
+                  <td className="py-2 pr-3"><Badge variant={r.status === "completed" ? "default" : r.status === "active" ? "secondary" : "outline"} className={r.status === "completed" ? "bg-gold text-primary" : ""}>{STATUS_LABEL[r.status] || r.status}</Badge></td>
                   <td className="py-2 pr-3">
                     <div className="flex items-center gap-2">
                       <Progress value={r.progress_pct} className="flex-1" />

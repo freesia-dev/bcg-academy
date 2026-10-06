@@ -1,36 +1,87 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Progress } from "@/components/ui/progress";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  AlertCircle, Award, Building2, CalendarDays, Check, Clock, GraduationCap, Loader2, MapPin, MessageCircle, PlayCircle, Upload,
+} from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PageHeader from "@/components/site/PageHeader";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import ProgramVisual from "@/components/site/ProgramVisual";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GraduationCap, PlayCircle, Loader2, Clock, Award } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyEnrollments } from "@/hooks/useEnrollments";
+import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { supabase } from "@/integrations/supabase/client";
+import { formatDate, formatDateRange, regCode, rupiah } from "@/lib/batches";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-const statusLabel: Record<string, string> = {
-  pending_payment: "Menunggu Verifikasi",
-  active: "Aktif",
-  completed: "Selesai",
-  cancelled: "Dibatalkan",
-  rejected: "Ditolak",
+const db = supabase as any;
+const METHODS = ["Transfer bank", "QRIS / e-wallet", "Tunai di kantor"];
+const today = () => new Date().toISOString().slice(0, 10);
+
+type Tone = "info" | "warn" | "error" | "ok";
+interface View { headline: string; detail: string; tone: Tone; steps: string[]; current: number }
+
+/** Menerjemahkan status pendaftaran menjadi linimasa yang mudah dipahami peserta. */
+const describe = (e: any): View => {
+  const free = !e.payment_amount;
+  const online = e.course?.type === "online";
+  const base = ["Terdaftar", free ? "Gratis" : "Pembayaran", "Terverifikasi", online ? "Belajar" : "Kelas", "Sertifikat"];
+  switch (e.status) {
+    case "waitlist":
+      return { headline: "Daftar minat", detail: "Kami kabari lewat WhatsApp saat jadwal angkatan dibuka.", tone: "info", steps: ["Terdaftar", "Jadwal angkatan", "Pembayaran", "Kelas", "Sertifikat"], current: 1 };
+    case "pending_payment":
+      return e.payment_proof_url
+        ? { headline: "Menunggu verifikasi", detail: "Bukti pembayaran sedang diperiksa admin (maks. 1×24 jam).", tone: "warn", steps: base, current: 2 }
+        : { headline: "Menunggu pembayaran", detail: `Selesaikan pembayaran ${rupiah(e.payment_amount || 0)} lalu unggah buktinya.`, tone: "warn", steps: base, current: 1 };
+    case "rejected":
+      return { headline: "Pembayaran perlu diperbaiki", detail: e.notes ? `Alasan: ${e.notes}` : "Bukti pembayaran belum dapat diverifikasi.", tone: "error", steps: base, current: 1 };
+    case "active": {
+      const start = e.batch?.start_date;
+      const upcoming = start && start > today();
+      return {
+        headline: online ? "Aktif — silakan belajar" : upcoming ? `Kursi aman — kelas mulai ${formatDate(start)}` : "Kelas sedang berjalan",
+        detail: online ? "Materi bisa diakses kapan saja." : e.batch ? "Detail jadwal ada di bawah. Simpan kode pendaftaran Anda." : "Admin akan mengabarkan jadwal kelas.",
+        tone: "ok", steps: base, current: 3,
+      };
+    }
+    case "completed":
+      return { headline: "Selesai", detail: "Selamat! Sertifikat Anda siap diunduh.", tone: "ok", steps: base, current: 5 };
+    default:
+      return { headline: "Dibatalkan", detail: "", tone: "info", steps: base, current: 0 };
+  }
+};
+
+const TONE: Record<Tone, string> = {
+  info: "bg-secondary text-primary",
+  warn: "bg-amber-50 text-amber-900 border border-amber-200",
+  error: "bg-destructive/5 text-destructive border border-destructive/30",
+  ok: "bg-green-50 text-green-900 border border-green-200",
 };
 
 const MyCourses = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { enrollments, loading } = useMyEnrollments(user?.id);
-
+  const { brand } = useSiteConfig();
+  const { enrollments, loading, refetch } = useMyEnrollments(user?.id);
   const [pct, setPct] = useState<Record<string, number>>({});
+  const [payInfo, setPayInfo] = useState<any>(null);
+  const [uploadFor, setUploadFor] = useState<any>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [method, setMethod] = useState(METHODS[0]);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    const live = enrollments.filter((e) => e.status === "active" || e.status === "completed");
+    supabase.from("site_content").select("value").eq("key", "payment_info").maybeSingle().then(({ data }) => setPayInfo(data?.value || null));
+  }, []);
+
+  // progres belajar untuk kelas online
+  useEffect(() => {
+    const live = enrollments.filter((e) => (e.status === "active" || e.status === "completed") && e.course?.type === "online");
     if (!user || live.length === 0) return;
     (async () => {
       const courseIds = live.map((e) => e.course_id);
@@ -38,106 +89,206 @@ const MyCourses = () => {
       const modIds = (mods || []).map((m: any) => m.id);
       if (!modIds.length) return;
       const [{ data: les }, { data: prog }] = await Promise.all([
-        (supabase as any).from("lesson_outline").select("id,module_id").in("module_id", modIds),
+        db.from("lesson_outline").select("id,module_id").in("module_id", modIds),
         supabase.from("lesson_progress").select("lesson_id").eq("user_id", user.id),
       ]);
       const done = new Set((prog || []).map((p: any) => p.lesson_id));
       const modCourse: Record<string, string> = Object.fromEntries((mods || []).map((m: any) => [m.id, m.course_id]));
       const tot: Record<string, number> = {}, dn: Record<string, number> = {};
-      (les || []).forEach((l: any) => {
-        const c = modCourse[l.module_id];
-        tot[c] = (tot[c] || 0) + 1;
-        if (done.has(l.id)) dn[c] = (dn[c] || 0) + 1;
-      });
+      (les || []).forEach((l: any) => { const c = modCourse[l.module_id]; tot[c] = (tot[c] || 0) + 1; if (done.has(l.id)) dn[c] = (dn[c] || 0) + 1; });
       setPct(Object.fromEntries(courseIds.map((c) => [c, tot[c] ? Math.round(((dn[c] || 0) / tot[c]) * 100) : 0])));
     })();
   }, [enrollments, user]);
 
-  const filtered = (statuses: string[]) => enrollments.filter((e) => statuses.includes(e.status));
+  const openCert = async (path: string) => {
+    const { data, error } = await supabase.storage.from("certificates").createSignedUrl(path, 60 * 60);
+    if (error || !data?.signedUrl) return toast.error("Gagal membuka sertifikat");
+    window.open(data.signedUrl, "_blank");
+  };
 
-  const card = (e: any) => (
-    <Card key={e.id} className="overflow-hidden hover:shadow-strong transition-all">
-      <div className="aspect-video bg-gradient-to-br from-gold/20 to-corporate-blue/20 flex items-center justify-center">
-        {e.course?.cover_image ? <img src={e.course.cover_image} alt="" className="w-full h-full object-cover" /> : <GraduationCap className="h-12 w-12 text-gold/40" />}
-      </div>
-      <CardContent className="p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <Badge variant={e.status === "rejected" ? "destructive" : e.status === "active" ? "default" : "secondary"} className={e.status === "active" ? "bg-gold text-primary" : ""}>{statusLabel[e.status]}</Badge>
-          <Badge variant="outline" className="text-xs">{e.course?.type === "online" ? "Online" : "Offline"}</Badge>
-        </div>
-        <h3 className="font-bold text-primary line-clamp-2">{e.course?.title}</h3>
-        {e.course?.duration && <p className="text-xs text-muted-foreground flex items-center gap-1"><Clock size={12} />{e.course.duration}</p>}
-        {e.status === "active" || e.status === "completed" ? (
-          <div className="space-y-2">
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs text-muted-foreground"><span>Progres belajar</span><span>{pct[e.course_id] ?? 0}%</span></div>
-              <Progress value={pct[e.course_id] ?? 0} className="h-1.5" />
+  const cancel = async (e: any) => {
+    if (!confirm(`Batalkan pendaftaran "${e.course?.title}"?`)) return;
+    const { error } = await db.rpc("cancel_registration", { _enrollment_id: e.id });
+    if (error) return toast.error(error.message);
+    toast.success("Pendaftaran dibatalkan");
+    refetch();
+  };
+
+  const upload = async () => {
+    if (!user || !uploadFor || !file) return toast.error("Pilih file bukti pembayaran");
+    if (file.size > 5 * 1024 * 1024) return toast.error("Ukuran file maksimal 5 MB");
+    setBusy(true);
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${user.id}/${uploadFor.course_id}-${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("payment-proofs").upload(path, file);
+    if (upErr) { setBusy(false); return toast.error(`Gagal mengunggah: ${upErr.message}`); }
+    const { error } = await db.rpc("attach_payment_proof", { _enrollment_id: uploadFor.id, _proof_path: path, _method: method });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    supabase.functions.invoke("notify-payment", { body: { course_id: uploadFor.course_id, course_title: uploadFor.course?.title || "", amount: uploadFor.payment_amount || 0 } }).catch(() => {});
+    toast.success("Bukti pembayaran terkirim. Admin akan memverifikasi maks. 1×24 jam.");
+    setUploadFor(null); setFile(null);
+    refetch();
+  };
+
+  const current = enrollments.filter((e) => !["completed", "cancelled"].includes(e.status));
+  const finished = enrollments.filter((e) => e.status === "completed");
+  const cancelled = enrollments.filter((e) => e.status === "cancelled");
+  const firstName = ((user?.user_metadata?.full_name as string) || "").split(" ")[0];
+
+  const card = (e: any) => {
+    const v = describe(e);
+    const online = e.course?.type === "online";
+    const wa = `https://wa.me/${brand.whatsapp}?text=${encodeURIComponent(`Halo ${brand.name}, saya ingin bertanya tentang pendaftaran "${e.course?.title}". Kode: ${regCode(e.id)}.`)}`;
+    return (
+      <article key={e.id} className="overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="grid md:grid-cols-[220px_1fr]">
+          <Link to={`/kursus/${e.course?.slug}`} className="block aspect-[16/9] md:aspect-auto md:h-full">
+            <ProgramVisual title={e.course?.title || ""} category={e.course?.category} image={e.course?.cover_image} />
+          </Link>
+          <div className="p-5 sm:p-6 space-y-4">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <h2 className="text-lg font-bold text-primary leading-snug">{e.course?.title}</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Kode {regCode(e.id)} · didaftarkan {formatDate(e.enrolled_at?.slice(0, 10))}</p>
+              </div>
+              <span className={cn("rounded-full px-3 py-1 text-xs font-semibold", TONE[v.tone])}>{v.headline}</span>
             </div>
-            <Button variant="gold" className="w-full" onClick={() => navigate(`/learn/${e.course.slug}`)}><PlayCircle size={16} className="mr-2" />{e.status === "completed" ? "Lihat Materi" : (pct[e.course_id] ?? 0) > 0 ? "Lanjut Belajar" : "Mulai Belajar"}</Button>
-            {e.certificate_url && (
-              <Button variant="outline" className="w-full" onClick={async () => {
-                const { data, error } = await supabase.storage.from("certificates").createSignedUrl(e.certificate_url!, 60 * 60);
-                if (error || !data?.signedUrl) { toast.error("Gagal membuka sertifikat"); return; }
-                window.open(data.signedUrl, "_blank");
-              }}><Award size={16} className="mr-2" />Unduh Sertifikat</Button>
+
+            {e.status !== "cancelled" && (
+              <ol className="grid grid-cols-5 gap-1" aria-label="Status pendaftaran">
+                {v.steps.map((s, i) => {
+                  const done = i < v.current, cur = i === v.current;
+                  return (
+                    <li key={s} className="flex flex-col items-center text-center gap-1.5">
+                      <span className={cn("flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold",
+                        done ? "bg-green-600 text-white" : cur ? (v.tone === "error" ? "bg-destructive text-white" : "bg-primary text-primary-foreground") : "bg-muted text-muted-foreground")}>
+                        {done ? <Check className="h-3.5 w-3.5" /> : i + 1}
+                      </span>
+                      <span className={cn("text-[11px] leading-tight", cur ? "font-semibold text-foreground" : "text-muted-foreground")}>{s}</span>
+                    </li>
+                  );
+                })}
+              </ol>
             )}
-          </div>
-        ) : e.status === "pending_payment" ? (
-          <p className="text-xs text-muted-foreground text-center py-2">Admin sedang memverifikasi pembayaran Anda (maks. 1×24 jam). Kursus terbuka otomatis setelah disetujui.</p>
-        ) : e.status === "rejected" ? (
-          <div className="space-y-2">
-            <div className="rounded-md border border-destructive/30 bg-destructive/5 p-2 text-xs">
-              <p className="font-semibold text-destructive">Pembayaran belum dapat diverifikasi</p>
-              {e.notes && <p className="text-muted-foreground mt-0.5">{e.notes}</p>}
+
+            {v.detail && <p className={cn("rounded-lg px-3 py-2 text-sm flex gap-2", TONE[v.tone])}>{v.tone === "error" && <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />}{v.detail}</p>}
+
+            {e.batch && (
+              <div className="grid gap-1.5 text-sm text-muted-foreground sm:grid-cols-2">
+                <span className="flex items-center gap-2"><GraduationCap className="h-4 w-4" />{e.batch.name}</span>
+                <span className="flex items-center gap-2"><CalendarDays className="h-4 w-4" />{formatDateRange(e.batch.start_date, e.batch.end_date)}</span>
+                {e.batch.schedule && <span className="flex items-center gap-2"><Clock className="h-4 w-4" />{e.batch.schedule}</span>}
+                {e.batch.location && <span className="flex items-center gap-2"><MapPin className="h-4 w-4" />{e.batch.location}</span>}
+                {e.batch.notes && <span className="sm:col-span-2 text-foreground/80">Catatan: {e.batch.notes}</span>}
+              </div>
+            )}
+
+            {online && (e.status === "active" || e.status === "completed") && (
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-muted-foreground"><span>Progres belajar</span><span>{pct[e.course_id] ?? 0}%</span></div>
+                <Progress value={pct[e.course_id] ?? 0} className="h-1.5" />
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2 pt-1">
+              {(e.status === "pending_payment" && !e.payment_proof_url) || e.status === "rejected"
+                ? <Button variant="gold" onClick={() => { setUploadFor(e); setFile(null); }}><Upload className="h-4 w-4" />Unggah bukti bayar</Button> : null}
+              {online && e.status === "active" && <Button onClick={() => navigate(`/learn/${e.course.slug}`)}><PlayCircle className="h-4 w-4" />{(pct[e.course_id] ?? 0) > 0 ? "Lanjut belajar" : "Mulai belajar"}</Button>}
+              {e.status === "completed" && e.certificate_url && <Button variant="gold" onClick={() => openCert(e.certificate_url)}><Award className="h-4 w-4" />Unduh sertifikat</Button>}
+              {online && e.status === "completed" && <Button variant="outline" onClick={() => navigate(`/learn/${e.course.slug}`)}>Lihat materi</Button>}
+              <Button asChild variant="outline"><a href={wa} target="_blank" rel="noreferrer"><MessageCircle className="h-4 w-4" />Hubungi admin</a></Button>
+              {["waitlist", "pending_payment", "rejected"].includes(e.status) && (
+                <Button variant="ghost" className="text-muted-foreground" onClick={() => cancel(e)}>Batalkan</Button>
+              )}
             </div>
-            <Button variant="gold" className="w-full" onClick={() => navigate(`/kursus/${e.course?.slug}`)}>Kirim Ulang Bukti</Button>
           </div>
-        ) : (
-          <Button variant="outline" className="w-full" onClick={() => navigate(`/kursus/${e.course?.slug}`)}>Lihat Detail</Button>
-        )}
-      </CardContent>
-    </Card>
-  );
+        </div>
+      </article>
+    );
+  };
 
   return (
     <div className="min-h-screen">
       <Header />
-      <PageHeader crumbs={[{ label: "Dashboard Saya" }]} title="Dashboard Saya" subtitle="Pantau status pendaftaran, lanjutkan belajar, dan unduh sertifikat Anda." />
+      <PageHeader crumbs={[{ label: "Dashboard Saya" }]} title={firstName ? `Halo, ${firstName}` : "Dashboard Saya"}
+        subtitle="Pantau status pendaftaran, jadwal kelas, materi, dan sertifikat Anda di sini." />
       <main className="py-10 md:py-14">
-        <div className="container mx-auto px-4">
-
+        <div className="container mx-auto px-4 max-w-5xl space-y-10">
           {loading ? (
-            <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-gold" /></div>
+            <div className="space-y-4">{[0, 1].map((i) => <div key={i} className="h-56 rounded-2xl bg-muted animate-pulse" />)}</div>
           ) : enrollments.length === 0 ? (
-            <Card><CardContent className="p-12 text-center space-y-4">
-              <GraduationCap className="h-16 w-16 mx-auto text-muted-foreground/40" />
-              <p className="text-muted-foreground">Anda belum mendaftar program apa pun.</p>
-              <Button onClick={() => navigate("/kursus")}>Lihat program</Button>
-            </CardContent></Card>
+            <div className="rounded-2xl border border-dashed border-border bg-card p-12 text-center">
+              <GraduationCap className="mx-auto h-12 w-12 text-muted-foreground" />
+              <p className="mt-4 font-semibold text-primary">Belum ada pendaftaran</p>
+              <p className="mt-1 text-sm text-muted-foreground">Pilih program pelatihan dan daftar dalam 3 langkah.</p>
+              <Button className="mt-5" onClick={() => navigate("/kursus")}>Lihat program</Button>
+            </div>
           ) : (
-            <Tabs defaultValue={filtered(["active"]).length ? "active" : filtered(["pending_payment", "rejected"]).length ? "pending" : filtered(["completed"]).length ? "completed" : "active"}>
-              <TabsList>
-                <TabsTrigger value="active">Aktif ({filtered(["active"]).length})</TabsTrigger>
-                <TabsTrigger value="pending">Menunggu / Perlu Tindakan ({filtered(["pending_payment", "rejected"]).length})</TabsTrigger>
-                <TabsTrigger value="completed">Selesai ({filtered(["completed"]).length})</TabsTrigger>
-              </TabsList>
-              <TabsContent value="active" className="mt-6">
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">{filtered(["active"]).map(card)}</div>
-                {filtered(["active"]).length === 0 && <p className="text-center text-muted-foreground py-12">Tidak ada kursus aktif.</p>}
-              </TabsContent>
-              <TabsContent value="pending" className="mt-6">
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">{filtered(["pending_payment", "rejected"]).map(card)}</div>
-                {filtered(["pending_payment", "rejected"]).length === 0 && <p className="text-center text-muted-foreground py-12">Tidak ada yang menunggu verifikasi.</p>}
-              </TabsContent>
-              <TabsContent value="completed" className="mt-6">
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">{filtered(["completed"]).map(card)}</div>
-                {filtered(["completed"]).length === 0 && <p className="text-center text-muted-foreground py-12">Belum ada kursus yang selesai.</p>}
-              </TabsContent>
-            </Tabs>
+            <>
+              {current.length > 0 && (
+                <section className="space-y-4">
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Pendaftaran berjalan ({current.length})</h2>
+                  {current.map(card)}
+                </section>
+              )}
+              {finished.length > 0 && (
+                <section className="space-y-4">
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Selesai ({finished.length})</h2>
+                  {finished.map(card)}
+                </section>
+              )}
+              {cancelled.length > 0 && (
+                <details className="rounded-xl border border-border bg-card p-4">
+                  <summary className="cursor-pointer text-sm font-semibold text-muted-foreground">Riwayat dibatalkan ({cancelled.length})</summary>
+                  <ul className="mt-3 space-y-2 text-sm">
+                    {cancelled.map((e) => (
+                      <li key={e.id} className="flex items-center justify-between gap-3">
+                        <span>{e.course?.title} <span className="text-muted-foreground">· {regCode(e.id)}</span></span>
+                        <Link to={`/daftar/${e.course?.slug}`} className="font-semibold text-primary underline underline-offset-4">Daftar lagi</Link>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </>
           )}
         </div>
       </main>
       <Footer />
+
+      <Dialog open={!!uploadFor} onOpenChange={(v) => !v && setUploadFor(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Unggah bukti pembayaran</DialogTitle>
+            <DialogDescription>{uploadFor?.course?.title} · {rupiah(uploadFor?.payment_amount || 0)}</DialogDescription>
+          </DialogHeader>
+          {payInfo && (
+            <div className="rounded-lg bg-secondary/70 p-4 text-sm">
+              <p className="flex items-center gap-2 font-semibold"><Building2 className="h-4 w-4" />{payInfo.bank_name}</p>
+              <p className="mt-1 font-mono text-base">{payInfo.account_number}</p>
+              <p className="text-muted-foreground">a.n. {payInfo.account_holder}</p>
+            </div>
+          )}
+          <div className="grid gap-3">
+            <div><Label>Metode pembayaran</Label>
+              <select className="mt-1.5 w-full h-11 rounded-md border bg-background px-3 text-sm" value={method} onChange={(ev) => setMethod(ev.target.value)}>
+                {METHODS.map((m) => <option key={m}>{m}</option>)}
+              </select>
+            </div>
+            <div><Label>File bukti (foto/PDF, maks. 5 MB)</Label>
+              <label className="mt-1.5 flex h-11 cursor-pointer items-center gap-2 rounded-md border border-dashed bg-background px-3 text-sm text-muted-foreground hover:border-primary/50">
+                <Upload className="h-4 w-4" /><span className="truncate">{file ? file.name : "Pilih file"}</span>
+                <input type="file" accept="image/*,application/pdf" className="sr-only" onChange={(ev) => setFile(ev.target.files?.[0] || null)} />
+              </label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUploadFor(null)}>Batal</Button>
+            <Button variant="gold" onClick={upload} disabled={busy}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}Kirim bukti</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
