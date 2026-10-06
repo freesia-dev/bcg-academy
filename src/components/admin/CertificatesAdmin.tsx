@@ -97,13 +97,13 @@ const CertificatesAdmin = () => {
       // Save first so preview reflects latest
       await save();
       const { data: sess } = await supabase.auth.getSession();
-      const url = `https://ytzrrnpvezxrtzytycvd.supabase.co/functions/v1/issue-certificate`;
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/issue-certificate`;
       const res = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${sess.session?.access_token}`,
-          apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0enJybnB2ZXp4cnR6eXR5Y3ZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNTYxOTQsImV4cCI6MjA3NDkzMjE5NH0.KFb4LX2Y9ivLZ6zYzSmRSRc_QMrovSGWDCk-DSuQVEE",
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
         body: JSON.stringify({ course_id: courseId, preview: true, preview_name: "Nama Peserta Contoh" }),
       });
