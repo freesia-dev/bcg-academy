@@ -62,7 +62,8 @@ async function metaFor(path: string, env: Env): Promise<Meta | null> {
   const cfg = await siteConfig(env);
   const name = cfg.brand?.name || "LPK Borneo Citra Gemilang";
   const city = (cfg.brand?.city || "Bontang, Kalimantan Timur").split(",")[0].trim();
-  const baseDesc = cfg.seo?.description || `${name} — lembaga pelatihan kerja di ${city} dengan kurikulum berbasis SKKNI dan sertifikat yang bisa diverifikasi online.`;
+  // bawaan sama dengan DEFAULT_CONFIG di src/lib/siteConfig.ts
+  const baseDesc = cfg.seo?.description || `${name} (BCG Academy) — lembaga pelatihan kerja di ${city} dengan kurikulum berbasis SKKNI, instruktur profesional, dan akses uji kompetensi BNSP.`;
   const baseImg = abs(cfg.seo?.ogImage) || DEFAULT_IMAGE;
   const page = (title: string, description: string, extra: Partial<Meta> = {}): Meta => ({
     title: `${title} | ${name}`, description: clip(description), image: baseImg, url: `${SITE}${path}`, ...extra,
@@ -94,8 +95,11 @@ async function metaFor(path: string, env: Env): Promise<Meta | null> {
       }],
     });
   }
-  if (p === "/tentang-kami") return page("Tentang Kami", cfg.sections?.about?.description || baseDesc);
-  if (p === "/kontak") return page("Kontak", cfg.sections?.contact?.subtitle || `Hubungi ${name} di ${city}: WhatsApp, telepon, email, dan lokasi kantor.`);
+  if (p === "/tentang-kami") {
+    return page("Tentang Kami", cfg.sections?.about?.description ||
+      `${name} (BCG Academy) adalah lembaga pelatihan kerja yang berfokus pada pengembangan keterampilan praktis dan profesional di Kota ${city} dan sekitarnya.`);
+  }
+  if (p === "/kontak") return page("Kontak", `Hubungi ${name} di ${city}: WhatsApp, telepon, email, dan lokasi kantor. Tanya jadwal, biaya, atau pelatihan untuk instansi.`);
   if (p === "/verifikasi") return page("Verifikasi Sertifikat", `Periksa keaslian sertifikat pelatihan ${name} dengan memindai QR atau mengetik nomor sertifikat.`);
   if (p.startsWith("/verifikasi/")) return page("Verifikasi Sertifikat", `Hasil pemeriksaan keaslian sertifikat ${name}.`, { noindex: true, url: `${SITE}/verifikasi` });
   return null;
