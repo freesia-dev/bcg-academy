@@ -35,18 +35,6 @@ function ensureFont(name: string) {
   document.head.appendChild(l);
 }
 
-function setMeta(sel: string, attr: string, content: string) {
-  if (!content) return;
-  let el = document.head.querySelector<HTMLMetaElement>(sel);
-  if (!el) {
-    el = document.createElement("meta");
-    const m = sel.match(/\[(name|property)="([^"]+)"\]/);
-    if (m) el.setAttribute(m[1], m[2]);
-    document.head.appendChild(el);
-  }
-  el.setAttribute(attr, content);
-}
-
 export function applyTheme(cfg: SiteConfig) {
   const r = document.documentElement.style;
   const t = cfg.theme;
@@ -80,22 +68,6 @@ export function applyTheme(cfg: SiteConfig) {
   const SERIF = ["DM Serif Display", "Playfair Display", "Lora", "Merriweather"];
   r.setProperty("--font-heading", `'${t.headingFont}', ${SERIF.includes(t.headingFont) ? "Georgia, serif" : "system-ui, sans-serif"}`);
   r.setProperty("--font-body", `'${t.bodyFont}', system-ui, sans-serif`);
-
-  const { title, description, ogImage } = cfg.seo;
-  if (title) {
-    document.title = title;
-    setMeta('meta[property="og:title"]', "content", title);
-    setMeta('meta[name="twitter:title"]', "content", title);
-  }
-  if (description) {
-    setMeta('meta[name="description"]', "content", description);
-    setMeta('meta[property="og:description"]', "content", description);
-    setMeta('meta[name="twitter:description"]', "content", description);
-  }
-  if (ogImage) {
-    setMeta('meta[property="og:image"]', "content", ogImage);
-    setMeta('meta[name="twitter:image"]', "content", ogImage);
-  }
 }
 
 export const SiteConfigProvider = ({ children }: { children: ReactNode }) => {

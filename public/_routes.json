@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "include": ["/", "/kursus", "/kursus/*", "/tentang-kami", "/kontak", "/verifikasi", "/verifikasi/*", "/sitemap.xml"],
+  "exclude": []
+}

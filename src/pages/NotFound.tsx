@@ -3,9 +3,11 @@ import { Compass } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import Seo from "@/components/site/Seo";
 
 const NotFound = () => (
   <div className="min-h-screen flex flex-col">
+    <Seo title="Halaman tidak ditemukan" noindex />
     <Header />
     <main className="flex flex-1 items-center justify-center px-4 pt-[120px] pb-20">
       <div className="text-center max-w-md">

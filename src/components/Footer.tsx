@@ -35,7 +35,7 @@ const Footer = ({ mobileBar }: Props) => {
           <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1.2fr]">
             <div className="space-y-5">
               <div className="inline-flex rounded-xl bg-white px-3 py-2">
-                <img src={brand.logo} alt={brand.name} className="h-10 w-auto" />
+                <img src={brand.logo} alt={brand.name} className="h-8 w-auto" width="96" height="32" />
               </div>
               <p className="text-sm leading-relaxed text-primary-foreground/70 max-w-xs">
                 {brand.name} — {brand.tagline.toLowerCase()} di {brand.city.split(",")[0]}. Pelatihan berbasis kompetensi untuk siap kerja dan siap berwirausaha.

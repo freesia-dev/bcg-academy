@@ -181,7 +181,7 @@ const Admin = () => {
 
   const brandBlock = (
     <div className="h-16 flex items-center gap-3 px-5 border-b shrink-0">
-      <img src={brand.logo} alt={brand.name} className="h-8 w-auto" />
+      <img src={brand.logo} alt={brand.name} className="h-7 w-auto" />
       <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground border-l pl-3">Admin</span>
     </div>
   );

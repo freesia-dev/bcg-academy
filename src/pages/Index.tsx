@@ -13,6 +13,8 @@ import CtaBand from "@/components/CtaBand";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
+import Seo from "@/components/site/Seo";
+import { organizationLd, websiteLd } from "@/lib/seo";
 import type { SectionId } from "@/lib/siteConfig";
 
 const SECTIONS: Record<SectionId, React.ComponentType> = {
@@ -21,9 +23,11 @@ const SECTIONS: Record<SectionId, React.ComponentType> = {
 };
 
 const Index = () => {
-  const { sectionOrder, sections } = useSiteConfig();
+  const cfg = useSiteConfig();
+  const { sectionOrder, sections } = cfg;
   return (
     <div className="min-h-screen">
+      <Seo path="/" jsonLd={[organizationLd(cfg), websiteLd(cfg)]} />
       <Header />
       <main>
         {sectionOrder.filter((id) => sections[id]?.enabled).map((id) => {

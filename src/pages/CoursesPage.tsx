@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useCourses } from "@/hooks/useCourses";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
+import Seo from "@/components/site/Seo";
+import { breadcrumbLd } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
 type Mode = "all" | "offline" | "online";
@@ -45,6 +47,9 @@ const CoursesPage = () => {
 
   return (
     <div className="min-h-screen">
+      <Seo title="Program Pelatihan"
+        description={`Daftar program pelatihan kerja di ${brand.name}, ${brand.city.split(",")[0]}: ${courses.map((c) => c.title).join(", ") || "administrasi, barista, rias, desain grafis, komputer, digital marketing"}. Lihat jadwal angkatan, biaya, dan daftar online.`}
+        jsonLd={breadcrumbLd([{ name: "Program", path: "/kursus" }])} />
       <Header />
       <PageHeader
         crumbs={[{ label: "Program" }]}

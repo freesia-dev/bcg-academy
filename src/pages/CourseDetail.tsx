@@ -15,12 +15,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { useMyEnrollment } from "@/hooks/useEnrollments";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import NotFound from "./NotFound";
+import Seo from "@/components/site/Seo";
+import { breadcrumbLd, courseLd } from "@/lib/seo";
 import { availability, fetchBatches, fetchSeats, formatDate, formatDateRange, priceFor, rupiah, type Batch } from "@/lib/batches";
 
 const CourseDetail = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const { brand, sections } = useSiteConfig();
+  const cfg = useSiteConfig();
+  const { brand, sections } = cfg;
   const { course, modules, loading } = useCourse(slug);
   const { user } = useAuth();
   const { enrollment } = useMyEnrollment(user?.id, course?.id);
@@ -88,6 +91,10 @@ const CourseDetail = () => {
 
   return (
     <div className="min-h-screen">
+      <Seo title={`Pelatihan ${course.title}`}
+        description={course.description || `Pelatihan ${course.title} di ${brand.name}, ${brand.city.split(",")[0]}. Lihat jadwal angkatan, biaya, dan daftar online.`}
+        path={`/kursus/${course.slug}`} image={course.cover_image}
+        jsonLd={[courseLd(cfg, course as any, batches), breadcrumbLd([{ name: "Program", path: "/kursus" }, { name: course.title, path: `/kursus/${course.slug}` }])]} />
       <Header />
 
       <section className="relative overflow-hidden border-b border-border bg-secondary/60 pt-[104px] pb-10">

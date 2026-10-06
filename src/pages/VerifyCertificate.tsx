@@ -9,6 +9,7 @@ import { BadgeCheck, CalendarDays, GraduationCap, Hash, Loader2, QrCode, SearchX
 import { supabase } from "@/integrations/supabase/client";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { formatDateRange } from "@/lib/batches";
+import Seo from "@/components/site/Seo";
 
 interface Result {
   participant: string; course_title: string; issued_at: string | null; cert_code: string;
@@ -40,6 +41,8 @@ const VerifyCertificate = () => {
 
   return (
     <div className="min-h-screen">
+      <Seo title="Verifikasi Sertifikat" path="/verifikasi" noindex={!!code}
+        description={`Periksa keaslian sertifikat pelatihan ${brand.name} dengan memindai QR atau mengetik nomor sertifikat.`} />
       <Header />
       <PageHeader crumbs={[{ label: "Verifikasi Sertifikat" }]} title="Verifikasi sertifikat"
         subtitle={`Pastikan sertifikat benar diterbitkan oleh ${brand.name}. Pindai QR pada sertifikat atau ketik nomornya.`} />

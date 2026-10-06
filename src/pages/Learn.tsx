@@ -378,7 +378,7 @@ const Learn = () => {
           <Button asChild variant="ghost" size="icon" aria-label="Kembali ke Dashboard Saya">
             <Link to="/kursus-saya"><ArrowLeft className="h-5 w-5" /></Link>
           </Button>
-          <img src={brand.logo} alt={brand.name} className="hidden md:block h-8 w-auto" />
+          <img src={brand.logo} alt={brand.name} className="hidden md:block h-7 w-auto" />
           <span className="hidden md:block h-6 w-px bg-border" />
           <div className="min-w-0 flex-1">
             <p className="font-semibold text-primary truncate leading-tight">{course.title}</p>

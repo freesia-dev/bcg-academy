@@ -129,7 +129,7 @@ const Auth = () => {
     <div className="min-h-screen grid lg:grid-cols-2 bg-background">
       <div className="flex flex-col px-4 py-6 sm:px-10">
         <div className="flex items-center justify-between">
-          <Link to="/" aria-label="Beranda"><img src={brand.logo} alt={brand.name} className="h-10 w-auto" /></Link>
+          <Link to="/" aria-label="Beranda"><img src={brand.logo} alt={brand.name} className="h-8 w-auto" /></Link>
           <Link to="/" className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary"><ArrowLeft className="h-4 w-4" />Beranda</Link>
         </div>
         <div className="flex flex-1 items-center justify-center py-10">

@@ -58,7 +58,7 @@ const Hero = () => {
                 <div className="absolute inset-0 opacity-[0.1]" style={{ backgroundImage: "radial-gradient(#fff 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
                 <div className="relative">
                   <div className="flex items-center justify-between gap-4">
-                    <div className="rounded-xl bg-white px-3 py-2"><img src={brand.logo} alt="" className="h-9 w-auto" /></div>
+                    <div className="rounded-xl bg-white px-3 py-2"><img src={brand.logo} alt="" className="h-7 w-auto" /></div>
                     <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium">{brand.city.split(",")[0]}</span>
                   </div>
                   <p className="mt-7 text-sm font-medium text-primary-foreground/70">Program pelatihan tersedia</p>

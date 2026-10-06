@@ -1,7 +1,7 @@
 import euisPhoto from "@/assets/team/euis-paramitha.jpg";
 import harisPhoto from "@/assets/team/haris-fadilah.jpg";
 import yogaPhoto from "@/assets/team/yoga-satrya.jpg";
-import logoDefault from "@/assets/logo-bcg.png";
+import logoDefault from "@/assets/logo-bcg.webp";
 
 /* ------------------------------------------------------------------ *
  * Satu sumber kebenaran untuk tampilan situs publik.

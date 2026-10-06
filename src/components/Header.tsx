@@ -55,7 +55,7 @@ const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex h-[72px] items-center justify-between gap-4">
           <Link to="/" className="flex items-center shrink-0" aria-label={`${brand.name} — Beranda`}>
-            <img src={brand.logo} alt={brand.name} className="h-10 w-auto" />
+            <img src={brand.logo} alt={brand.name} className="h-8 w-auto" width="96" height="32" />
           </Link>
 
           <nav className="hidden md:flex items-center gap-1" aria-label="Menu utama">
