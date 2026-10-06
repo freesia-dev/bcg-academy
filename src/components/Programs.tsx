@@ -15,7 +15,7 @@ const Programs = () => {
     <section id="programs" className="py-20 md:py-24 bg-card">
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
-          <SectionHeader align="left" eyebrow={c.eyebrow} title={c.title} highlight={c.titleHighlight} subtitle={c.subtitle} className="mb-0" />
+          <SectionHeader align="left" eyebrow={c.eyebrow} title={c.title} highlight={c.titleHighlight} subtitle={c.subtitle} className="mb-0 md:mb-0" />
           <Button asChild variant="outline" className="shrink-0 self-start md:self-auto"><Link to="/kursus">Semua program<ArrowRight className="h-4 w-4" /></Link></Button>
         </div>
 

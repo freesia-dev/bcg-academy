@@ -14,7 +14,7 @@ const About = () => {
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
           <div className="space-y-8">
             <div className="space-y-4">
-              <SectionHeader align="left" eyebrow={c.eyebrow} title={c.title} highlight={c.titleHighlight} />
+              <SectionHeader align="left" eyebrow={c.eyebrow} title={c.title} highlight={c.titleHighlight} className="mb-5 md:mb-5" />
               <p className="text-lg text-muted-foreground leading-relaxed">{c.description}</p>
               <blockquote className="border-l-4 border-gold pl-4 text-muted-foreground italic">
                 "{c.quote}"

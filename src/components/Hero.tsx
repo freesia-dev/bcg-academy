@@ -24,7 +24,7 @@ const Hero = () => {
             <p className="inline-flex items-center gap-2 rounded-full border border-primary/10 bg-card px-3.5 py-1.5 text-xs sm:text-sm font-medium text-primary shadow-soft">
               <span className="h-2 w-2 rounded-full bg-gold" />{c.badge}
             </p>
-            <h1 className="mt-6 text-[2.5rem] leading-[1.08] sm:text-5xl lg:text-[3.5rem] font-extrabold tracking-tight text-primary text-balance">
+            <h1 className="mt-6 text-[2.15rem] leading-[1.1] sm:text-5xl lg:text-[3.5rem] font-extrabold tracking-tight text-primary text-balance">
               {c.titleBefore}{" "}
               <span className="relative whitespace-nowrap">
                 <span className="relative z-10">{c.titleHighlight}</span>
@@ -54,7 +54,7 @@ const Hero = () => {
                 <img src={c.image} alt={`Kegiatan pelatihan di ${brand.name}`} className="aspect-[4/3] w-full rounded-3xl object-cover shadow-strong" />
               </div>
             ) : (
-              <div className="relative overflow-hidden rounded-3xl bg-navy-mesh p-6 sm:p-8 text-primary-foreground shadow-strong">
+              <div className="relative overflow-hidden rounded-3xl bg-navy-mesh p-6 pb-16 sm:p-8 sm:pb-16 text-primary-foreground shadow-strong">
                 <div className="absolute inset-0 opacity-[0.1]" style={{ backgroundImage: "radial-gradient(#fff 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
                 <div className="relative">
                   <div className="flex items-center justify-between gap-4">

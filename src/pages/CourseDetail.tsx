@@ -116,6 +116,10 @@ const CourseDetail = () => {
                   <dd className="font-semibold text-foreground">{f.value}</dd>
                 </div>
               ))}
+              <div className="flex items-center gap-2 text-sm lg:hidden">
+                <dt className="text-muted-foreground">Biaya:</dt>
+                <dd className="font-bold text-primary">{formatPrice(course)}</dd>
+              </div>
             </dl>
           </div>
         </div>
@@ -125,7 +129,7 @@ const CourseDetail = () => {
         <div className="container mx-auto px-4">
           <div className="grid gap-10 lg:grid-cols-[1fr_360px]">
             <div className="space-y-10 min-w-0">
-              <div className="aspect-[16/9] overflow-hidden rounded-2xl">
+              <div className={`${course.cover_image ? "aspect-[16/9]" : "aspect-[21/8]"} overflow-hidden rounded-2xl`}>
                 <ProgramVisual title={course.title} category={course.category} image={course.cover_image} size="lg" />
               </div>
 
