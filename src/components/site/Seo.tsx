@@ -65,6 +65,8 @@ const Seo = ({ title, description, path, image, type = "website", noindex = fals
     upsertMeta("name", "twitter:description", desc);
     upsertMeta("name", "twitter:image", img);
 
+    // data terstruktur dari server (pratinjau link) diganti versi lengkap dari halaman ini
+    document.head.querySelectorAll('script[type="application/ld+json"]:not(#seo-jsonld)').forEach((el) => el.remove());
     let script = document.getElementById("seo-jsonld") as HTMLScriptElement | null;
     if (ld) {
       if (!script) {
