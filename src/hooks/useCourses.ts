@@ -22,20 +22,34 @@ export interface Course {
   color: string;
 }
 
+let allCache: Course[] | null = null;
+let allInflight: Promise<Course[]> | null = null;
+const loadAll = () => {
+  if (allCache) return Promise.resolve(allCache);
+  if (!allInflight) {
+    allInflight = (async () => {
+      const { data } = await supabase.from("courses").select("*").eq("is_published", true).order("sort_order");
+      allCache = (data as Course[]) || [];
+      return allCache;
+    })();
+  }
+  return allInflight;
+};
+
+/** Daftar program terbit. Filter dilakukan di sisi klien (datanya kecil) dan hasil dibagi antar komponen. */
 export const useCourses = (filter?: { type?: "online" | "offline"; free?: boolean }) => {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [all, setAll] = useState<Course[]>(allCache ?? []);
+  const [loading, setLoading] = useState(!allCache);
 
   useEffect(() => {
-    let q = supabase.from("courses").select("*").eq("is_published", true).order("sort_order");
-    if (filter?.type) q = q.eq("type", filter.type);
-    if (filter?.free !== undefined) q = q.eq("is_free", filter.free);
-    q.then(({ data }) => {
-      setCourses((data as Course[]) || []);
-      setLoading(false);
-    });
-  }, [filter?.type, filter?.free]);
+    let alive = true;
+    loadAll().then((d) => { if (alive) { setAll(d); setLoading(false); } });
+    return () => { alive = false; };
+  }, []);
 
+  const courses = all.filter((c) =>
+    (!filter?.type || c.type === filter.type) &&
+    (filter?.free === undefined || (c.is_free || c.price === 0) === filter.free));
   return { courses, loading };
 };
 

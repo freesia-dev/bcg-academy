@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import PageHeader from "@/components/site/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -101,18 +102,17 @@ const MyCourses = () => {
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="pt-32 pb-20">
+      <PageHeader crumbs={[{ label: "Dashboard Saya" }]} title="Dashboard Saya" subtitle="Pantau status pendaftaran, lanjutkan belajar, dan unduh sertifikat Anda." />
+      <main className="py-10 md:py-14">
         <div className="container mx-auto px-4">
-          <h1 className="text-3xl font-bold text-primary mb-2">Kursus <span className="text-gradient">Saya</span></h1>
-          <p className="text-muted-foreground mb-8">Lanjutkan belajar dan pantau status pendaftaran Anda.</p>
 
           {loading ? (
             <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-gold" /></div>
           ) : enrollments.length === 0 ? (
             <Card><CardContent className="p-12 text-center space-y-4">
               <GraduationCap className="h-16 w-16 mx-auto text-muted-foreground/40" />
-              <p className="text-muted-foreground">Anda belum mendaftar kursus apapun.</p>
-              <Button variant="gold" onClick={() => navigate("/kursus")}>Jelajahi Katalog</Button>
+              <p className="text-muted-foreground">Anda belum mendaftar program apa pun.</p>
+              <Button onClick={() => navigate("/kursus")}>Lihat program</Button>
             </CardContent></Card>
           ) : (
             <Tabs defaultValue={filtered(["active"]).length ? "active" : filtered(["pending_payment", "rejected"]).length ? "pending" : filtered(["completed"]).length ? "completed" : "active"}>

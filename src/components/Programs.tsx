@@ -1,84 +1,37 @@
-import SectionHeader from "@/components/SectionHeader";
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Clock, Users, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import ProgramRegistrationDialog from "./ProgramRegistrationDialog";
-import { usePrograms } from "@/hooks/usePrograms";
+import { ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import SectionHeader from "@/components/SectionHeader";
+import ProgramCard from "@/components/site/ProgramCard";
+import { useCourses } from "@/hooks/useCourses";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 
 const Programs = () => {
-  const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { programs } = usePrograms();
   const { brand, sections } = useSiteConfig();
   const c = sections.programs;
-
-  const handleProgramRegister = (programTitle: string) => {
-    setSelectedProgram(programTitle);
-    setIsDialogOpen(true);
-  };
+  const { courses, loading } = useCourses();
 
   return (
-    <section id="programs" className="py-20 md:py-24 bg-secondary/40">
+    <section id="programs" className="py-20 md:py-24 bg-card">
       <div className="container mx-auto px-4">
-        <SectionHeader eyebrow={c.eyebrow} title={c.title} highlight={c.titleHighlight} subtitle={c.subtitle} />
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {programs.map((program) => (
-            <Card key={program.id} className="group hover:shadow-strong transition-all duration-300 hover:-translate-y-2 border-0 bg-card/80 backdrop-blur-sm flex flex-col h-full">
-              <CardHeader className="space-y-4">
-                <div className="flex items-start justify-between">
-                  <Badge variant="secondary" className="bg-gold/10 text-gold-dark border-gold/20">
-                    {program.level}
-                  </Badge>
-                </div>
-                <CardTitle className="text-xl font-bold group-hover:text-gold transition-colors min-h-[3.5rem]">
-                  <Link to={`/program-pelatihan/${program.slug}`} className="hover:underline">{program.title}</Link>
-                </CardTitle>
-                <CardDescription className="text-muted-foreground leading-relaxed min-h-[4.5rem]">
-                  {program.description}
-                </CardDescription>
-              </CardHeader>
-
-              <CardContent className="space-y-6 flex flex-col flex-1">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center gap-2"><Clock size={16} className="text-muted-foreground" /><span>{program.duration}</span></div>
-                  <div className="flex items-center gap-2"><Users size={16} className="text-muted-foreground" /><span>{program.capacity}</span></div>
-                </div>
-
-                <div className="space-y-2 min-h-[6rem]">
-                  <h4 className="font-semibold text-sm text-primary">Yang Akan Dipelajari:</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {program.highlights.map((highlight, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">{highlight}</Badge>
-                    ))}
-                  </div>
-                </div>
-
-                <Button variant="gold" className="w-full group-hover:shadow-glow transition-all duration-300 mt-auto"
-                  onClick={() => handleProgramRegister(program.title)}>
-                  Daftar Program
-                  <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
+          <SectionHeader align="left" eyebrow={c.eyebrow} title={c.title} highlight={c.titleHighlight} subtitle={c.subtitle} className="mb-0" />
+          <Button asChild variant="outline" className="shrink-0 self-start md:self-auto"><Link to="/kursus">Semua program<ArrowRight className="h-4 w-4" /></Link></Button>
         </div>
 
-        <div className="text-center mt-16">
-          <p className="text-muted-foreground mb-6">{c.ctaText}</p>
-          <Button variant="corporate" size="lg" onClick={() => window.open(`https://wa.me/${brand.whatsapp}`, '_blank')}>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {loading
+            ? [0, 1, 2].map((i) => <div key={i} className="h-[380px] rounded-2xl bg-muted animate-pulse" />)
+            : courses.slice(0, 6).map((p) => <ProgramCard key={p.id} c={p} />)}
+        </div>
+
+        <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-3 text-center">
+          <p className="text-muted-foreground">{c.ctaText}</p>
+          <a href={`https://wa.me/${brand.whatsapp}`} target="_blank" rel="noreferrer" className="font-semibold text-primary underline underline-offset-4 hover:text-gold-dark">
             {c.ctaButton}
-          </Button>
+          </a>
         </div>
       </div>
-
-      {selectedProgram && (
-        <ProgramRegistrationDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} programTitle={selectedProgram} />
-      )}
     </section>
   );
 };

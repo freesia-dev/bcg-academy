@@ -100,7 +100,7 @@ export const GROUPS: Group[] = [
   },
   {
     id: "programs", label: "Program Pelatihan", path: ["sections", "programs"],
-    description: "Daftar program diambil dari menu Admin → Kursus / Program. Di sini hanya teks pengantarnya.",
+    description: "Kartu program diambil dari menu Admin → Kursus (LMS). Di sini hanya teks pengantarnya.",
     fields: [
       ...titleFields,
       { key: "subtitle", label: "Subjudul", type: "textarea", rows: 3 },
@@ -143,6 +143,62 @@ export const GROUPS: Group[] = [
     id: "gallery", label: "Galeri", path: ["sections", "gallery"],
     description: "Foto galeri diunggah lewat Admin → Galeri. Section otomatis tersembunyi bila belum ada foto.",
     fields: [...titleFields, { key: "subtitle", label: "Subjudul", type: "textarea", rows: 2 }],
+  },
+  {
+    id: "steps", label: "Cara Daftar", path: ["sections", "steps"],
+    description: "Langkah singkat dari memilih program sampai sertifikat.",
+    fields: [
+      ...titleFields,
+      { key: "subtitle", label: "Subjudul", type: "textarea", rows: 2 },
+      {
+        key: "items", label: "Langkah", type: "list", itemLabel: "Langkah", itemTitleKey: "title", max: 6,
+        fields: [
+          { key: "title", label: "Judul langkah", type: "text" },
+          { key: "desc", label: "Penjelasan", type: "textarea", rows: 2 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "testimonials", label: "Testimoni", path: ["sections", "testimonials"],
+    description: "Section ini tersembunyi otomatis sampai ada minimal satu testimoni.",
+    fields: [
+      ...titleFields,
+      { key: "subtitle", label: "Subjudul", type: "textarea", rows: 2 },
+      {
+        key: "items", label: "Testimoni alumni", type: "list", itemLabel: "Testimoni", itemTitleKey: "name", max: 12,
+        fields: [
+          { key: "photo", label: "Foto (opsional)", type: "image" },
+          { key: "name", label: "Nama", type: "text" },
+          { key: "program", label: "Program / angkatan", type: "text" },
+          { key: "quote", label: "Kutipan", type: "textarea", rows: 3 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "faq", label: "FAQ", path: ["sections", "faq"],
+    fields: [
+      ...titleFields,
+      { key: "subtitle", label: "Subjudul", type: "textarea", rows: 2 },
+      {
+        key: "items", label: "Pertanyaan", type: "list", itemLabel: "Pertanyaan", itemTitleKey: "q", max: 15,
+        fields: [
+          { key: "q", label: "Pertanyaan", type: "text" },
+          { key: "a", label: "Jawaban", type: "textarea", rows: 3 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "cta", label: "Ajakan Daftar", path: ["sections", "cta"],
+    description: "Pita ajakan berwarna di dekat bagian bawah beranda.",
+    fields: [
+      { key: "title", label: "Judul", type: "text" },
+      { key: "subtitle", label: "Subjudul", type: "textarea", rows: 2 },
+      { key: "primaryCta", label: "Teks tombol utama", type: "text" },
+      { key: "secondaryCta", label: "Teks tombol WhatsApp", type: "text" },
+    ],
   },
   {
     id: "contact", label: "Kontak", path: ["sections", "contact"],

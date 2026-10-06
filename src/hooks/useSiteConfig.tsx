@@ -55,18 +55,18 @@ export function applyTheme(cfg: SiteConfig) {
   r.setProperty("--primary", hsl(ph, ps, pl));
   r.setProperty("--background-dark", hsl(ph, ps, pl));
   r.setProperty("--card-dark-foreground", "0 0% 98%");
-  r.setProperty("--foreground", hsl(ph, Math.min(ps, 15), Math.min(pl, 8)));
-  r.setProperty("--card-foreground", hsl(ph, Math.min(ps, 15), Math.min(pl, 8)));
-  r.setProperty("--secondary-foreground", hsl(ph, Math.min(ps, 15), Math.min(pl, 8)));
+  r.setProperty("--foreground", hsl(ph, Math.min(ps, 47), Math.min(pl, 11)));
+  r.setProperty("--card-foreground", hsl(ph, Math.min(ps, 47), Math.min(pl, 11)));
+  r.setProperty("--secondary-foreground", hsl(ph, ps, pl));
   r.setProperty("--accent-foreground", hsl(ph, ps, Math.min(pl, 8)));
   r.setProperty("--sidebar-background", hsl(ph, ps, pl));
 
   const [ah, as, al] = hexToHsl(t.accent);
   r.setProperty("--gold", hsl(ah, as, al));
   r.setProperty("--gold-light", hsl(ah, as, al + 12));
-  r.setProperty("--gold-dark", hsl(ah, as, al - 14));
+  r.setProperty("--gold-dark", hsl(ah, as, Math.max(al - 22, 24)));
   r.setProperty("--accent", hsl(ah, as, al));
-  r.setProperty("--ring", hsl(ah, as, al));
+  r.setProperty("--ring", hsl(ph, ps, Math.min(pl + 14, 40)));
   r.setProperty("--sidebar-primary", hsl(ah, as, al));
 
   const [sh, ss, sl] = hexToHsl(t.secondary);
@@ -122,7 +122,7 @@ export const SiteConfigProvider = ({ children }: { children: ReactNode }) => {
     window.addEventListener("message", onMsg);
 
     // Klik di preview → pilih section yang sesuai di editor; tautan tidak berpindah halaman
-    const ids: Record<string, string> = { home: "hero", offer: "offer", programs: "programs", about: "about", team: "team", gallery: "gallery", contact: "contact" };
+    const ids: Record<string, string> = { home: "hero", offer: "offer", programs: "programs", steps: "steps", about: "about", team: "team", testimonials: "testimonials", gallery: "gallery", faq: "faq", cta: "cta", contact: "contact" };
     const style = document.createElement("style");
     style.textContent = "main section[id]{cursor:pointer;transition:outline-color .15s;outline:3px solid transparent;outline-offset:-3px}main section[id]:hover{outline-color:hsl(var(--gold)/.7)}";
     document.head.appendChild(style);

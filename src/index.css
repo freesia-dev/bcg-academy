@@ -10,20 +10,20 @@ All colors MUST be HSL.
 @layer base {
   :root {
     /* Core Brand Colors */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 4%;
+    --background: 60 23% 97%;
+    --foreground: 222 47% 11%;
     --background-dark: 240 10% 4%;
     --foreground-light: 0 0% 98%;
 
     /* Brand Identity */
-    --primary: 240 10% 4%; /* Deep Professional Black */
+    --primary: 215 73% 16%; /* Navy */
     --primary-foreground: 0 0% 98%;
     
     --gold: 45 80% 52%; /* Luxurious Gold */
     --gold-light: 45 85% 65%;
-    --gold-dark: 45 75% 38%;
+    --gold-dark: 45 80% 30%;
     
-    --corporate-blue: 217 91% 22%; /* Corporate Blue */
+    --corporate-blue: 216 62% 26%;
     --corporate-blue-light: 217 91% 35%;
     
     --accent-red: 0 84% 60%; /* Accent Red */
@@ -31,28 +31,28 @@ All colors MUST be HSL.
 
     /* UI Components */
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 4%;
+    --card-foreground: 222 47% 11%;
     --card-dark: 240 8% 8%;
     --card-dark-foreground: 0 0% 98%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 4%;
+    --popover-foreground: 222 47% 11%;
 
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 240 10% 4%;
+    --secondary: 214 33% 95%;
+    --secondary-foreground: 215 73% 16%;
 
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%;
+    --muted: 214 25% 95%;
+    --muted-foreground: 215 16% 38%;
 
     --accent: 45 80% 52%;
-    --accent-foreground: 240 10% 4%;
+    --accent-foreground: 215 73% 16%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 45 80% 52%;
+    --border: 214 24% 88%;
+    --input: 214 24% 84%;
+    --ring: 215 73% 30%;
 
     --radius: 0.75rem;
 
@@ -63,10 +63,10 @@ All colors MUST be HSL.
     --gradient-accent: linear-gradient(90deg, hsl(var(--corporate-blue)), hsl(var(--accent-red)));
 
     /* Shadows */
-    --shadow-soft: 0 2px 8px hsl(var(--primary) / 0.1);
-    --shadow-medium: 0 4px 16px hsl(var(--primary) / 0.15);
-    --shadow-strong: 0 8px 32px hsl(var(--primary) / 0.2);
-    --shadow-gold: 0 4px 20px hsl(var(--gold) / 0.3);
+    --shadow-soft: 0 1px 2px hsl(var(--primary) / 0.06), 0 2px 8px hsl(var(--primary) / 0.06);
+    --shadow-medium: 0 4px 6px -2px hsl(var(--primary) / 0.06), 0 12px 24px -6px hsl(var(--primary) / 0.12);
+    --shadow-strong: 0 20px 40px -12px hsl(var(--primary) / 0.22);
+    --shadow-gold: 0 6px 18px -6px hsl(var(--gold) / 0.55);
 
     /* Sidebar */
     --sidebar-background: 240 10% 4%;
@@ -99,7 +99,7 @@ All colors MUST be HSL.
     --muted-foreground: 240 5% 65%;
 
     --accent: 45 80% 52%;
-    --accent-foreground: 240 10% 4%;
+    --accent-foreground: 215 73% 16%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
@@ -149,4 +149,23 @@ All colors MUST be HSL.
   .gold-gradient {
     background: var(--gradient-gold);
   }
+
+  .bg-dots {
+    background-image: radial-gradient(hsl(var(--primary) / 0.09) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  .bg-navy-mesh {
+    background:
+      radial-gradient(60% 80% at 100% 0%, hsl(var(--corporate-blue) / 0.9) 0%, transparent 60%),
+      radial-gradient(50% 60% at 0% 100%, hsl(var(--gold) / 0.18) 0%, transparent 60%),
+      hsl(var(--primary));
+  }
+
+  .text-balance { text-wrap: balance; }
+}
+
+@layer base {
+  html { scroll-behavior: smooth; scroll-padding-top: 88px; }
+  ::selection { background: hsl(var(--gold) / 0.35); }
 }

@@ -7,7 +7,7 @@ import { Phone, Mail, MapPin, Clock, Send, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 
-const Contact = () => {
+const Contact = ({ showHeader = true }: { showHeader?: boolean }) => {
   const { brand, sections } = useSiteConfig();
   const c = sections.contact;
   const [form, setForm] = useState({ name: "", phone: "", message: "" });
@@ -25,9 +25,9 @@ const Contact = () => {
   };
 
   return (
-    <section id="contact" className="py-20 md:py-24">
+    <section id="contact" className="py-20 md:py-24 bg-card">
       <div className="container mx-auto px-4">
-        <SectionHeader eyebrow={c.eyebrow} title={c.title} highlight={c.titleHighlight} subtitle={c.subtitle} />
+        {showHeader && <SectionHeader eyebrow={c.eyebrow} title={c.title} highlight={c.titleHighlight} subtitle={c.subtitle} />}
 
         <div className="grid lg:grid-cols-3 gap-12">
           <div className="space-y-8">

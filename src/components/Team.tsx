@@ -5,7 +5,7 @@ const Team = () => {
   const c = useSiteConfig().sections.team;
   if (!c.members.length) return null;
   return (
-    <section id="team" className="py-20 md:py-24 bg-secondary/40">
+    <section id="team" className="py-20 md:py-24 bg-secondary/50">
       <div className="container mx-auto px-4">
         <SectionHeader eyebrow={c.eyebrow} title={c.title} highlight={c.titleHighlight} subtitle={c.subtitle} />
 

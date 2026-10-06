@@ -62,7 +62,7 @@ const SiteConfigAdmin = () => {
   }, [ready, draft]);
   useEffect(() => {
     if (!ready) return;
-    const map: Record<string, string> = { hero: "home", offer: "offer", programs: "programs", about: "about", team: "team", gallery: "gallery", contact: "contact" };
+    const map: Record<string, string> = { hero: "home", offer: "offer", programs: "programs", steps: "steps", about: "about", team: "team", testimonials: "testimonials", gallery: "gallery", faq: "faq", cta: "cta", contact: "contact" };
     if (map[panel]) frame.current?.contentWindow?.postMessage({ type: "bcg-scroll", id: map[panel] }, window.location.origin);
     else if (["theme", "brand", "seo", "order"].includes(panel)) frame.current?.contentWindow?.postMessage({ type: "bcg-scroll", id: "home" }, window.location.origin);
   }, [panel, ready]);

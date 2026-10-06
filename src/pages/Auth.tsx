@@ -8,7 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Loader2, MailCheck } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, MailCheck } from "lucide-react";
+import { useSiteConfig } from "@/hooks/useSiteConfig";
 
 // Login Google belum diaktifkan di Supabase (Auth → Providers). Ubah ke true setelah diaktifkan.
 const GOOGLE_ENABLED = import.meta.env.VITE_ENABLE_GOOGLE_LOGIN === "true";
@@ -31,6 +32,7 @@ const Auth = () => {
   const redirect = params.get("redirect");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { brand } = useSiteConfig();
 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -124,15 +126,20 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <Link to="/"><Button variant="ghost" className="mb-4"><ArrowLeft className="mr-2 h-4 w-4" />Beranda</Button></Link>
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Akun BCG Academy</CardTitle>
-            <CardDescription>Masuk atau daftar untuk mengikuti kursus</CardDescription>
+    <div className="min-h-screen grid lg:grid-cols-2 bg-background">
+      <div className="flex flex-col px-4 py-6 sm:px-10">
+        <div className="flex items-center justify-between">
+          <Link to="/" aria-label="Beranda"><img src={brand.logo} alt={brand.name} className="h-10 w-auto" /></Link>
+          <Link to="/" className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary"><ArrowLeft className="h-4 w-4" />Beranda</Link>
+        </div>
+        <div className="flex flex-1 items-center justify-center py-10">
+        <div className="w-full max-w-md">
+        <Card className="border-0 bg-transparent shadow-none">
+          <CardHeader className="px-0">
+            <CardTitle className="text-3xl font-extrabold tracking-tight text-primary">{tab === "signup" ? "Buat akun peserta" : "Selamat datang kembali"}</CardTitle>
+            <CardDescription className="text-base">{tab === "signup" ? "Satu akun untuk mendaftar program, memantau status, dan mengunduh sertifikat." : "Masuk untuk melihat program dan status pendaftaran Anda."}</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-0">
             {pendingEmail ? (
               <div className="text-center space-y-4 py-2">
                 <MailCheck className="h-12 w-12 mx-auto text-gold" />
@@ -150,7 +157,7 @@ const Auth = () => {
               </div>
             ) : (
             <Tabs value={tab} onValueChange={setTab}>
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-2 h-11">
                 <TabsTrigger value="login">Masuk</TabsTrigger>
                 <TabsTrigger value="signup">Daftar</TabsTrigger>
               </TabsList>
@@ -159,7 +166,7 @@ const Auth = () => {
                 <form onSubmit={handleLogin} className="space-y-4 pt-4">
                   <div><Label>Email</Label><Input type="email" required value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} /></div>
                   <div><Label>Password</Label><Input type="password" required value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} /></div>
-                  <Button type="submit" variant="gold" className="w-full" disabled={loading}>{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Masuk</Button>
+                  <Button type="submit" size="lg" className="w-full" disabled={loading}>{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Masuk</Button>
                   <button type="button" onClick={handleForgot} className="text-xs text-muted-foreground hover:text-gold underline w-full text-center">Lupa password?</button>
                 </form>
               </TabsContent>
@@ -170,7 +177,7 @@ const Auth = () => {
                   <div><Label>Nomor WhatsApp</Label><Input type="tel" required placeholder="08xxxxxxxxxx" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
                   <div><Label>Email</Label><Input type="email" required value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} /></div>
                   <div><Label>Password</Label><Input type="password" required minLength={6} value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} /></div>
-                  <Button type="submit" variant="gold" className="w-full" disabled={loading}>{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Daftar</Button>
+                  <Button type="submit" size="lg" variant="gold" className="w-full" disabled={loading}>{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Buat akun</Button>
                 </form>
               </TabsContent>
             </Tabs>
@@ -191,7 +198,21 @@ const Auth = () => {
             )}
           </CardContent>
         </Card>
+        </div>
+        </div>
       </div>
+      <aside className="relative hidden lg:flex overflow-hidden bg-navy-mesh p-12 text-primary-foreground">
+        <div className="absolute inset-0 opacity-[0.08]" style={{ backgroundImage: "radial-gradient(#fff 1px, transparent 1px)", backgroundSize: "22px 22px" }} />
+        <div className="relative mt-auto max-w-md">
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-gold">{brand.name}</p>
+          <h2 className="mt-4 text-4xl font-extrabold leading-tight tracking-tight">Belajar keterampilan yang langsung terpakai.</h2>
+          <ul className="mt-8 space-y-4">
+            {["Daftar program dan pantau statusnya dari satu tempat", "Materi pendukung dan jadwal pelatihan selalu bisa diakses", "Sertifikat kelulusan yang bisa diverifikasi online"].map((t) => (
+              <li key={t} className="flex gap-3 text-primary-foreground/85"><CheckCircle2 className="h-5 w-5 shrink-0 text-gold" />{t}</li>
+            ))}
+          </ul>
+        </div>
+      </aside>
     </div>
   );
 };

@@ -11,11 +11,14 @@ import logoDefault from "@/assets/logo-bcg.png";
 
 export const CONFIG_KEY = "site_config";
 
-export type SectionId = "hero" | "offer" | "programs" | "about" | "team" | "gallery" | "contact";
+export type SectionId = "hero" | "programs" | "steps" | "offer" | "about" | "team" | "testimonials" | "gallery" | "faq" | "cta" | "contact";
 
 export interface StatItem { value: string; label: string }
 export interface OfferItem { icon: "graduation" | "award" | "briefcase" | "users" | "shield" | "book"; title: string; desc: string }
 export interface TeamMember { photo: string; name: string; role: string; bio: string }
+export interface StepItem { title: string; desc: string }
+export interface Testimonial { name: string; program: string; quote: string; photo: string }
+export interface FaqItem { q: string; a: string }
 
 export interface SiteConfig {
   brand: {
@@ -65,6 +68,10 @@ export interface SiteConfig {
     team: { enabled: boolean; eyebrow: string; title: string; titleHighlight: string; subtitle: string; members: TeamMember[] };
     gallery: { enabled: boolean; eyebrow: string; title: string; titleHighlight: string; subtitle: string };
     contact: { enabled: boolean; eyebrow: string; title: string; titleHighlight: string; subtitle: string; formTitle: string; formNote: string };
+    steps: { enabled: boolean; eyebrow: string; title: string; titleHighlight: string; subtitle: string; items: StepItem[] };
+    testimonials: { enabled: boolean; eyebrow: string; title: string; titleHighlight: string; subtitle: string; items: Testimonial[] };
+    faq: { enabled: boolean; eyebrow: string; title: string; titleHighlight: string; subtitle: string; items: FaqItem[] };
+    cta: { enabled: boolean; title: string; subtitle: string; primaryCta: string; secondaryCta: string };
   };
 }
 
@@ -91,10 +98,10 @@ export const DEFAULT_CONFIG: SiteConfig = {
     youtube: "",
   },
   theme: {
-    preset: "emas",
-    primary: "#09090b",
+    preset: "navy",
+    primary: "#0b2447",
     accent: "#e7b623",
-    secondary: "#052c6b",
+    secondary: "#19376d",
     headingFont: "Plus Jakarta Sans",
     bodyFont: "Inter",
     radius: 12,
@@ -105,7 +112,7 @@ export const DEFAULT_CONFIG: SiteConfig = {
       "LPK Borneo Citra Gemilang (BCG Academy) — lembaga pelatihan kerja di Bontang dengan kurikulum berbasis SKKNI, instruktur profesional, dan akses uji kompetensi BNSP.",
     ogImage: "",
   },
-  sectionOrder: ["hero", "offer", "programs", "about", "team", "gallery", "contact"],
+  sectionOrder: ["hero", "programs", "steps", "offer", "about", "team", "testimonials", "gallery", "faq", "cta", "contact"],
   sections: {
     hero: {
       enabled: true,
@@ -115,7 +122,7 @@ export const DEFAULT_CONFIG: SiteConfig = {
       titleAfter: "yang Anda Impikan",
       subtitle:
         "BCG Academy menyelenggarakan pelatihan berbasis kompetensi (SKKNI) dengan instruktur profesional dan akses uji kompetensi BNSP — dirancang agar peserta siap bekerja maupun berwirausaha.",
-      primaryCta: "Lihat Program Pelatihan",
+      primaryCta: "Lihat Program",
       secondaryCta: "Konsultasi via WhatsApp",
       image: "",
       highlights: [
@@ -241,6 +248,48 @@ export const DEFAULT_CONFIG: SiteConfig = {
       formTitle: "Kirim Pesan",
       formNote: "Pesan Anda akan diteruskan ke WhatsApp tim kami agar mendapat respons lebih cepat.",
     },
+    steps: {
+      enabled: true,
+      eyebrow: "Cara Daftar",
+      title: "Mulai dalam",
+      titleHighlight: "4 langkah",
+      subtitle: "Dari memilih program sampai memegang sertifikat, semuanya jelas sejak awal.",
+      items: [
+        { title: "Pilih program", desc: "Lihat jadwal, biaya, kurikulum, dan syarat di halaman tiap program." },
+        { title: "Daftar online", desc: "Isi data diri dan konfirmasi pendaftaran. Tim kami akan menghubungi Anda." },
+        { title: "Ikuti pelatihan", desc: "Belajar langsung bersama instruktur, praktik, dan materi pendukung." },
+        { title: "Raih sertifikat", desc: "Selesaikan pelatihan dan dapatkan sertifikat yang bisa diverifikasi online." },
+      ],
+    },
+    testimonials: {
+      enabled: true,
+      eyebrow: "Kata Alumni",
+      title: "Cerita dari",
+      titleHighlight: "alumni kami",
+      subtitle: "Pengalaman peserta yang telah menyelesaikan pelatihan di BCG Academy.",
+      items: [],
+    },
+    faq: {
+      enabled: true,
+      eyebrow: "FAQ",
+      title: "Pertanyaan yang",
+      titleHighlight: "sering diajukan",
+      subtitle: "Belum menemukan jawabannya? Tanyakan langsung lewat WhatsApp.",
+      items: [
+        { q: "Bagaimana cara mendaftar?", a: "Pilih program di halaman Program, lalu klik Daftar. Anda juga bisa menghubungi kami lewat WhatsApp untuk dibantu mendaftar." },
+        { q: "Apakah perlu pengalaman sebelumnya?", a: "Sebagian besar program dirancang untuk pemula. Level setiap program tercantum di halaman programnya." },
+        { q: "Apakah peserta mendapat sertifikat?", a: "Ya. Peserta yang menyelesaikan pelatihan mendapat sertifikat kelulusan yang keasliannya bisa diperiksa di halaman Verifikasi Sertifikat." },
+        { q: "Berapa biaya pelatihan?", a: "Biaya tercantum di halaman setiap program. Untuk pertanyaan seputar pembayaran, hubungi kami lewat WhatsApp." },
+        { q: "Di mana lokasi pelatihan?", a: "Pelatihan tatap muka berlangsung di kantor kami di Bontang. Alamat lengkap dan peta ada di bagian Kontak." },
+      ],
+    },
+    cta: {
+      enabled: true,
+      title: "Siap meningkatkan keterampilan Anda?",
+      subtitle: "Pilih program yang sesuai, atau konsultasikan dulu dengan tim kami. Gratis.",
+      primaryCta: "Lihat Program",
+      secondaryCta: "Konsultasi via WhatsApp",
+    },
   },
 };
 
@@ -249,8 +298,8 @@ export const DEFAULT_CONFIG: SiteConfig = {
 export interface ThemePreset { id: string; label: string; primary: string; accent: string; secondary: string }
 
 export const THEME_PRESETS: ThemePreset[] = [
-  { id: "emas", label: "Hitam & Emas (asli)", primary: "#09090b", accent: "#e7b623", secondary: "#052c6b" },
-  { id: "biru", label: "Biru Korporat", primary: "#0b2447", accent: "#e7b623", secondary: "#19376d" },
+  { id: "navy", label: "Navy & Emas (default)", primary: "#0b2447", accent: "#e7b623", secondary: "#19376d" },
+  { id: "emas", label: "Hitam & Emas (lama)", primary: "#09090b", accent: "#e7b623", secondary: "#052c6b" },
   { id: "hijau", label: "Hijau Profesional", primary: "#052e2b", accent: "#d4a72c", secondary: "#0f766e" },
   { id: "maroon", label: "Maroon Elegan", primary: "#2a0a10", accent: "#e0a526", secondary: "#7f1d1d" },
   { id: "slate", label: "Slate Modern", primary: "#0f172a", accent: "#38bdf8", secondary: "#1e40af" },
@@ -310,8 +359,12 @@ export function normalizeConfig(raw: any): SiteConfig {
 
 export const SECTION_LABELS: Record<SectionId, string> = {
   hero: "Hero (banner utama)",
-  offer: "Keunggulan",
   programs: "Program Pelatihan",
+  steps: "Cara Daftar",
+  offer: "Keunggulan",
+  testimonials: "Testimoni",
+  faq: "FAQ",
+  cta: "Ajakan Daftar",
   about: "Tentang Kami",
   team: "Instruktur",
   gallery: "Galeri",

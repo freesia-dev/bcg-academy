@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import PageHeader from "@/components/site/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { BadgeCheck, Loader2, SearchX, ShieldCheck } from "lucide-react";
+import { BadgeCheck, Loader2, SearchX } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Result { participant: string; course_title: string; issued_at: string | null; cert_code: string }
@@ -30,17 +31,14 @@ const VerifyCertificate = () => {
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="pt-36 pb-24">
+      <PageHeader crumbs={[{ label: "Verifikasi Sertifikat" }]} title="Verifikasi Sertifikat"
+        subtitle="Masukkan nomor sertifikat (contoh: LPK-BCG/2026/AB12CD34) untuk memastikan keasliannya." />
+      <main className="py-10 md:py-14">
         <div className="container mx-auto px-4 max-w-xl space-y-6">
-          <div className="text-center space-y-2">
-            <ShieldCheck className="h-10 w-10 mx-auto text-gold" />
-            <h1 className="text-3xl font-bold text-primary">Verifikasi Sertifikat</h1>
-            <p className="text-muted-foreground">Masukkan nomor sertifikat (contoh: LPK-BCG/2026/AB12CD34) untuk memastikan keasliannya.</p>
-          </div>
 
           <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); navigate(`/verifikasi/${encodeURIComponent(input.trim())}`); }}>
-            <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Nomor sertifikat" />
-            <Button type="submit" variant="gold" disabled={loading}>{loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Periksa"}</Button>
+            <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Nomor sertifikat" className="h-11 bg-card" aria-label="Nomor sertifikat" />
+            <Button type="submit" className="h-11" disabled={loading}>{loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Periksa"}</Button>
           </form>
 
           {result && (

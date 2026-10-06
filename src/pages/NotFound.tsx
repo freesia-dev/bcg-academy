@@ -1,24 +1,26 @@
-import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Compass } from "lucide-react";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import { Button } from "@/components/ui/button";
 
-const NotFound = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
-  }, [location.pathname]);
-
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">404</h1>
-        <p className="mb-4 text-xl text-gray-600">Oops! Page not found</p>
-        <a href="/" className="text-blue-500 underline hover:text-blue-700">
-          Return to Home
-        </a>
+const NotFound = () => (
+  <div className="min-h-screen flex flex-col">
+    <Header />
+    <main className="flex flex-1 items-center justify-center px-4 pt-[120px] pb-20">
+      <div className="text-center max-w-md">
+        <Compass className="mx-auto h-12 w-12 text-gold-dark" />
+        <p className="mt-6 text-sm font-semibold uppercase tracking-[0.16em] text-gold-dark">Halaman tidak ditemukan</p>
+        <h1 className="mt-2 text-3xl font-extrabold text-primary">Sepertinya Anda tersesat</h1>
+        <p className="mt-3 text-muted-foreground">Halaman yang Anda cari sudah dipindah atau tidak ada. Coba mulai dari beranda atau lihat daftar program.</p>
+        <div className="mt-8 flex justify-center gap-3">
+          <Button asChild variant="outline"><Link to="/">Ke beranda</Link></Button>
+          <Button asChild><Link to="/kursus">Lihat program</Link></Button>
+        </div>
       </div>
-    </div>
-  );
-};
+    </main>
+    <Footer />
+  </div>
+);
 
 export default NotFound;
